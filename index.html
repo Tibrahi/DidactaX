@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Didactax — Knowledge Creation & Teaching</title>
+    <title>Didactax — Structured Knowledge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         
         :root {
             --didac-orange: #FF6B00;
             --didac-white: #FFFFFF;
-            --didac-gray: #F4F4F9;
+            --didac-dark: #1A1A1A;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--didac-gray);
-            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #FDFDFD;
+            color: var(--didac-dark);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: var(--didac-orange); border-radius: 10px; }
+        .orange-gradient {
+            background: linear-gradient(135deg, #FF6B00 0%, #FF9E57 100%);
+        }
 
-        /* Scrollball UI */
+        /* Custom Scroll-ball */
         #scrollBall {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            width: 50px;
-            height: 50px;
+            width: 56px;
+            height: 56px;
             background: var(--didac-orange);
             border-radius: 50%;
             display: flex;
@@ -41,406 +40,407 @@
             justify-content: center;
             color: white;
             cursor: pointer;
-            box-shadow: 0 10px 25px rgba(255, 107, 0, 0.3);
-            z-index: 1000;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.3);
+            z-index: 100;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #scrollBall:hover { transform: scale(1.1) rotate(90deg); }
+        #scrollBall:hover { transform: scale(1.1); }
 
-        /* Custom Popup */
-        .didac-popup {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .popup-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 1.5rem;
-            width: 90%;
-            max-width: 500px;
-            transform: translateY(20px);
-            transition: 0.3s;
-        }
-
-        /* Editor Styles */
-        #editorArea {
-            min-height: 400px;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
+        /* Custom Editor Styles */
+        #editorContent {
+            min-height: 60vh;
             outline: none;
-            background: white;
-            line-height: 1.6;
+            line-height: 1.8;
+            font-size: 1.1rem;
         }
-        .toolbar-btn {
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            transition: 0.2s;
-            color: #4a5568;
-        }
-        .toolbar-btn:hover { background: #fff7ed; color: var(--didac-orange); }
 
-        .sidebar-link.active {
-            background-color: var(--didac-orange);
-            color: white;
+        .input-focus:focus {
+            border-color: var(--didac-orange);
+            box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
         }
-        
-        .step-indicator {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.8rem;
-            font-weight: bold;
+
+        .page-break {
+            border-top: 2px dashed #E2E8F0;
+            margin: 40px 0;
+            position: relative;
+        }
+        .page-break::after {
+            content: 'Next Page Boundary';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FDFDFD;
+            padding: 0 10px;
+            font-size: 10px;
+            color: #94A3B8;
+            text-transform: uppercase;
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
 
-    <!-- Sidebar & Main Layout -->
-    <div class="flex h-screen">
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col p-6 hidden md:flex">
-            <div class="flex items-center gap-2 mb-10">
-                <div class="w-8 h-8 bg-[#FF6B00] rounded-lg flex items-center justify-center text-white">
-                    <i class="fas fa-brain"></i>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-100 flex flex-col fixed h-full z-50">
+            <div class="p-8">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-10 h-10 orange-gradient rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-200">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Didactax</span>
                 </div>
-                <h1 class="text-xl font-bold text-gray-800">Didactax</h1>
+
+                <nav class="space-y-1">
+                    <button onclick="router('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-home"></i> Dashboard
+                    </button>
+                    <button onclick="router('books')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-book-open"></i> My Books
+                    </button>
+                    <button onclick="router('notes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-feather"></i> Notes
+                    </button>
+                </nav>
             </div>
             
-            <nav class="space-y-2 flex-1">
-                <button onclick="switchTab('dashboard')" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <i class="fas fa-th-large"></i> Dashboard
-                </button>
-                <button onclick="switchTab('books')" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600">
-                    <i class="fas fa-book"></i> My Books
-                </button>
-                <button onclick="switchTab('notes')" class="sidebar-link w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-500 hover:bg-orange-50 hover:text-orange-600">
-                    <i class="fas fa-sticky-note"></i> Notes
-                </button>
-            </nav>
-
-            <div class="mt-auto pt-6 border-t border-gray-100">
-                <p class="text-xs text-gray-400">Knowledge v1.0</p>
+            <div class="mt-auto p-8">
+                <div class="bg-orange-50 p-4 rounded-2xl">
+                    <p class="text-xs font-bold text-orange-600 mb-1 uppercase">Cloud Status</p>
+                    <p class="text-xs text-orange-400">Local IndexDB Active</p>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-10" id="mainView">
-            <!-- Dashboard -->
-            <div id="dashboardSection" class="section">
-                <header class="mb-8 flex justify-between items-center">
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-900">Welcome, Creator</h2>
-                        <p class="text-gray-500">Transform your notes into lasting knowledge.</p>
-                    </div>
-                    <button onclick="startCreationFlow()" class="bg-[#FF6B00] text-white px-6 py-3 rounded-full font-semibold shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all">
-                        <i class="fas fa-plus mr-2"></i> Create New
-                    </button>
-                </header>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <div class="text-orange-500 mb-2"><i class="fas fa-book-open text-xl"></i></div>
-                        <h3 class="text-2xl font-bold" id="bookCount">0</h3>
-                        <p class="text-gray-400 text-sm">Books Authored</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <div class="text-blue-500 mb-2"><i class="fas fa-feather text-xl"></i></div>
-                        <h3 class="text-2xl font-bold" id="noteCount">0</h3>
-                        <p class="text-gray-400 text-sm">Active Notes</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <div class="text-green-500 mb-2"><i class="fas fa-graduation-cap text-xl"></i></div>
-                        <h3 class="text-2xl font-bold">0</h3>
-                        <p class="text-gray-400 text-sm">Lessons Shared</p>
-                    </div>
-                </div>
-
-                <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
-                <div id="recentGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dynamic Items -->
-                </div>
-            </div>
-
-            <!-- Library View (Books/Notes) -->
-            <div id="librarySection" class="section hidden">
-                <div id="libraryContent"></div>
-            </div>
-
-            <!-- Editor View -->
-            <div id="editorSection" class="section hidden">
-                <div class="max-w-4xl mx-auto">
-                    <div class="flex items-center justify-between mb-6">
-                        <button onclick="switchTab('dashboard')" class="text-gray-400 hover:text-gray-600"><i class="fas fa-arrow-left"></i> Back</button>
-                        <h2 id="currentEditTitle" class="text-2xl font-bold">New Document</h2>
-                        <button onclick="saveDocument()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">Save Changes</button>
-                    </div>
-                    
-                    <!-- MS Office Style Toolbar -->
-                    <div class="bg-white border border-gray-200 rounded-t-lg p-2 flex gap-1 border-b-0">
-                        <button class="toolbar-btn" onclick="execCmd('bold')"><i class="fas fa-bold"></i></button>
-                        <button class="toolbar-btn" onclick="execCmd('italic')"><i class="fas fa-italic"></i></button>
-                        <button class="toolbar-btn" onclick="execCmd('underline')"><i class="fas fa-underline"></i></button>
-                        <div class="w-[1px] bg-gray-200 mx-2"></div>
-                        <button class="toolbar-btn" onclick="execCmd('justifyLeft')"><i class="fas fa-align-left"></i></button>
-                        <button class="toolbar-btn" onclick="execCmd('justifyCenter')"><i class="fas fa-align-center"></i></button>
-                        <div class="w-[1px] bg-gray-200 mx-2"></div>
-                        <button class="toolbar-btn" onclick="execCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
-                        <button class="toolbar-btn" onclick="execCmd('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
-                    </div>
-                    <div id="editorArea" contenteditable="true"></div>
-                </div>
-            </div>
+        <!-- Main Content Area -->
+        <main class="flex-1 ml-64 min-h-screen relative" id="app-viewport">
+            <!-- Content will be injected here -->
         </main>
     </div>
 
-    <!-- Scrollball Navigation -->
-    <div id="scrollBall" onclick="scrollToTop()">
-        <i class="fas fa-chevron-up"></i>
+    <!-- Floating Scroll-ball -->
+    <div id="scrollBall" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
     </div>
 
-    <!-- Custom Prompt Flow Modal -->
-    <div id="creationPopup" class="didac-popup">
-        <div class="popup-content shadow-2xl">
-            <div id="step1">
-                <h3 class="text-2xl font-bold mb-4">What are we creating?</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="setCreationType('book')" class="p-6 border-2 border-gray-100 rounded-2xl hover:border-orange-500 hover:bg-orange-50 transition-all text-center group">
-                        <i class="fas fa-book text-3xl mb-3 text-gray-300 group-hover:text-orange-500"></i>
-                        <span class="block font-bold">A Book</span>
-                    </button>
-                    <button onclick="setCreationType('note')" class="p-6 border-2 border-gray-100 rounded-2xl hover:border-orange-500 hover:bg-orange-50 transition-all text-center group">
-                        <i class="fas fa-sticky-note text-3xl mb-3 text-gray-300 group-hover:text-orange-500"></i>
-                        <span class="block font-bold">A Note</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="step2" class="hidden">
-                <h3 class="text-2xl font-bold mb-2">Give it a Title</h3>
-                <p class="text-sm text-gray-400 mb-4">A name that reflects your knowledge.</p>
-                <input type="text" id="promptTitle" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500" placeholder="Enter title here...">
-                <div class="mt-6 flex justify-between">
-                    <button onclick="prevStep(1)" class="text-gray-400">Back</button>
-                    <button onclick="nextStep(3)" class="bg-[#FF6B00] text-white px-8 py-3 rounded-xl">Next</button>
-                </div>
-            </div>
-
-            <div id="step3" class="hidden">
-                <h3 class="text-2xl font-bold mb-2">Short Summary</h3>
-                <p class="text-sm text-gray-400 mb-4">One sentence that summarizes the goal.</p>
-                <textarea id="promptSummary" class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500" rows="3" placeholder="Briefly describe what this is about..."></textarea>
-                <div class="mt-6 flex justify-between">
-                    <button onclick="prevStep(2)" class="text-gray-400">Back</button>
-                    <button onclick="finalizeCreation()" class="bg-[#FF6B00] text-white px-8 py-3 rounded-xl font-bold">Create Document</button>
-                </div>
-            </div>
-
-            <button onclick="closePopup()" class="absolute top-4 right-4 text-gray-300 hover:text-gray-500">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Message Notification -->
-    <div id="msgToast" class="fixed bottom-10 left-10 bg-gray-900 text-white px-6 py-3 rounded-full opacity-0 pointer-events-none transition-all z-[3000]">
-        Notification message
+    <!-- Message Toast -->
+    <div id="custom-toast" class="fixed bottom-8 left-72 bg-gray-900 text-white px-6 py-3 rounded-2xl translate-y-20 transition-transform duration-300 z-50 shadow-2xl flex items-center gap-3">
+        <i class="fas fa-check-circle text-orange-500"></i>
+        <span id="toast-msg">Document Saved</span>
     </div>
 
     <script>
-        // Database Setup
-        const db = new Dexie("DidactaxDB");
+        // DB Setup
+        const db = new Dexie("DidactaxKnowledge");
         db.version(1).stores({
-            items: "++id, type, title, summary, content, createdAt"
+            content: "++id, type, title, summary, targetPages, text, createdAt"
         });
 
-        let currentType = '';
-        let currentEditId = null;
+        // Application State
+        const state = {
+            currentView: 'dashboard',
+            currentDocId: null
+        };
 
-        // UI Helpers
-        function showMessage(text) {
-            const toast = document.getElementById('msgToast');
-            toast.innerText = text;
-            toast.classList.remove('opacity-0');
-            toast.classList.add('opacity-100');
-            setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                toast.classList.add('opacity-0');
-            }, 3000);
-        }
-
-        function scrollToTop() {
-            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // Tab Switching
-        async function switchTab(tabId) {
-            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active', 'text-orange-600', 'bg-orange-50'));
-            const sections = ['dashboardSection', 'librarySection', 'editorSection'];
-            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
-
-            if (tabId === 'dashboard') {
-                document.getElementById('dashboardSection').classList.remove('hidden');
-                document.querySelector('[onclick="switchTab(\'dashboard\')"]').classList.add('active');
-                renderDashboard();
-            } else if (tabId === 'books' || tabId === 'notes') {
-                document.getElementById('librarySection').classList.remove('hidden');
-                document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
-                renderLibrary(tabId === 'books' ? 'book' : 'note');
-            } else if (tabId === 'editor') {
-                document.getElementById('editorSection').classList.remove('hidden');
-            }
-        }
-
-        // Creation Flow
-        function startCreationFlow() {
-            document.getElementById('creationPopup').style.display = 'flex';
-            resetSteps();
-        }
-
-        function closePopup() {
-            document.getElementById('creationPopup').style.display = 'none';
-        }
-
-        function resetSteps() {
-            document.getElementById('step1').classList.remove('hidden');
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.add('hidden');
-            document.getElementById('promptTitle').value = '';
-            document.getElementById('promptSummary').value = '';
-        }
-
-        function setCreationType(type) {
-            currentType = type;
-            nextStep(2);
-        }
-
-        function nextStep(n) {
-            document.getElementById('step1').classList.add('hidden');
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.add('hidden');
-            document.getElementById(`step${n}`).classList.remove('hidden');
-        }
-
-        function prevStep(n) {
-            nextStep(n);
-        }
-
-        async function finalizeCreation() {
-            const title = document.getElementById('promptTitle').value;
-            const summary = document.getElementById('promptSummary').value;
-
-            if (!title) return showMessage("Please enter a title");
-
-            const id = await db.items.add({
-                type: currentType,
-                title,
-                summary,
-                content: '',
-                createdAt: new Date()
+        // Router
+        async function router(view, id = null) {
+            state.currentView = view;
+            state.currentDocId = id;
+            const viewport = document.getElementById('app-viewport');
+            
+            // Update Sidebar UI
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const text = btn.innerText.toLowerCase();
+                if (text.includes(view)) {
+                    btn.classList.add('bg-orange-50', 'text-orange-600');
+                } else {
+                    btn.classList.remove('bg-orange-50', 'text-orange-600');
+                }
             });
 
-            closePopup();
-            openEditor(id);
+            switch(view) {
+                case 'dashboard': renderDashboard(viewport); break;
+                case 'books': renderLibrary(viewport, 'book'); break;
+                case 'notes': renderLibrary(viewport, 'note'); break;
+                case 'create': renderPromptPage(viewport); break;
+                case 'editor': renderEditor(viewport, id); break;
+            }
+            window.scrollTo(0, 0);
         }
 
-        // Editor Functionality
-        async function openEditor(id) {
-            const item = await db.items.get(id);
-            currentEditId = id;
-            document.getElementById('currentEditTitle').innerText = item.title;
-            document.getElementById('editorArea').innerHTML = item.content || `<p>Start writing your ${item.type}...</p>`;
-            switchTab('editor');
-        }
+        // --- VIEWS ---
 
-        async function saveDocument() {
-            if (!currentEditId) return;
-            const content = document.getElementById('editorArea').innerHTML;
-            await db.items.update(currentEditId, { content });
-            showMessage("Knowledge saved successfully!");
-        }
-
-        function execCmd(cmd) {
-            document.execCommand(cmd, false, null);
-            document.getElementById('editorArea').focus();
-        }
-
-        // Dashboard Rendering
-        async function renderDashboard() {
-            const items = await db.items.toArray();
+        async function renderDashboard(container) {
+            const items = await db.content.toArray();
             const books = items.filter(i => i.type === 'book');
             const notes = items.filter(i => i.type === 'note');
 
-            document.getElementById('bookCount').innerText = books.length;
-            document.getElementById('noteCount').innerText = notes.length;
-
-            const recent = items.sort((a,b) => b.createdAt - a.createdAt).slice(0, 4);
-            const grid = document.getElementById('recentGrid');
-            grid.innerHTML = recent.map(item => `
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 flex justify-between items-center group cursor-pointer hover:shadow-md transition-all" onclick="openEditor(${item.id})">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl ${item.type === 'book' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} flex items-center justify-center">
-                            <i class="fas ${item.type === 'book' ? 'fa-book' : 'fa-sticky-note'}"></i>
-                        </div>
+            container.innerHTML = `
+                <div class="p-12 animate-in fade-in duration-500">
+                    <header class="flex justify-between items-center mb-12">
                         <div>
-                            <h4 class="font-bold text-gray-800">${item.title}</h4>
-                            <p class="text-xs text-gray-400">${item.type.toUpperCase()} • ${new Date(item.createdAt).toLocaleDateString()}</p>
+                            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Workspace</h1>
+                            <p class="text-gray-500">Where ideas evolve into structured knowledge.</p>
+                        </div>
+                        <button onclick="router('create')" class="orange-gradient text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-orange-200 hover:scale-105 transition-transform flex items-center gap-3">
+                            <i class="fas fa-plus"></i> Create Knowledge
+                        </button>
+                    </header>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-book"></i></div>
+                            <h3 class="text-3xl font-bold">${books.length}</h3>
+                            <p class="text-gray-400 font-medium">Books in progress</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-sticky-note"></i></div>
+                            <h3 class="text-3xl font-bold">${notes.length}</h3>
+                            <p class="text-gray-400 font-medium">Digital Notes</p>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-300 group-hover:text-orange-500"></i>
-                </div>
-            `).join('');
-        }
 
-        async function renderLibrary(type) {
-            const items = await db.items.where('type').equals(type).toArray();
-            const lib = document.getElementById('libraryContent');
-            
-            lib.innerHTML = `
-                <header class="mb-10">
-                    <h2 class="text-3xl font-bold capitalize">${type}s</h2>
-                    <p class="text-gray-500">Manage all your structured ${type} resources.</p>
-                </header>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    ${items.map(item => `
-                        <div class="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all group relative">
-                             <div class="absolute top-4 right-4 flex gap-2">
-                                <button onclick="deleteItem(event, ${item.id})" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                             </div>
-                             <div class="w-12 h-12 rounded-2xl ${type === 'book' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} flex items-center justify-center mb-6">
-                                <i class="fas ${type === 'book' ? 'fa-book' : 'fa-sticky-note'} text-xl"></i>
-                             </div>
-                             <h4 class="text-lg font-bold mb-2">${item.title}</h4>
-                             <p class="text-sm text-gray-500 mb-6 line-clamp-2">${item.summary || 'No summary provided.'}</p>
-                             <button onclick="openEditor(${item.id})" class="w-full py-3 bg-gray-50 text-gray-700 rounded-xl font-bold group-hover:bg-orange-500 group-hover:text-white transition-all">Open Document</button>
-                        </div>
-                    `).join('')}
-                    <button onclick="startCreationFlow()" class="border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-orange-500 hover:text-orange-500 transition-all">
-                        <i class="fas fa-plus-circle text-3xl mb-2"></i>
-                        <span class="font-bold">New ${type}</span>
-                    </button>
+                    <h2 class="text-2xl font-bold mb-6">Recently Edited</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${items.sort((a,b) => b.createdAt - a.createdAt).slice(0, 5).map(item => `
+                            <div onclick="router('editor', ${item.id})" class="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center group cursor-pointer hover:border-orange-200 transition-all">
+                                <div class="flex items-center gap-6">
+                                    <div class="text-gray-300 group-hover:text-orange-500 transition-colors"><i class="fas ${item.type === 'book' ? 'fa-book' : 'fa-feather'} text-xl"></i></div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">${item.title}</h4>
+                                        <p class="text-sm text-gray-400">${item.summary}</p>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-200 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }
 
-        async function deleteItem(e, id) {
-            e.stopPropagation();
-            if(confirm("Are you sure you want to delete this piece of knowledge?")) {
-                await db.items.delete(id);
-                switchTab(currentType === 'book' ? 'books' : 'dashboard');
-                showMessage("Document deleted.");
+        function renderPromptPage(container) {
+            container.innerHTML = `
+                <div class="p-12 max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
+                    <button onclick="router('dashboard')" class="mb-8 text-gray-400 hover:text-orange-600 flex items-center gap-2 font-medium">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </button>
+
+                    <div class="bg-white p-12 rounded-[2.5rem] border border-gray-100 shadow-2xl">
+                        <h2 class="text-3xl font-extrabold mb-8">What are we building today?</h2>
+                        
+                        <div class="space-y-8">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Knowledge Type</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button onclick="selectPromptType(this, 'book')" class="type-selector border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-orange-500 transition-all">
+                                        <i class="fas fa-book text-2xl mb-2 text-orange-500"></i>
+                                        <span class="block font-bold">Comprehensive Book</span>
+                                        <span class="text-xs text-gray-400 text-balance">Chapters, page targets, and long-form structure.</span>
+                                    </button>
+                                    <button onclick="selectPromptType(this, 'note')" class="type-selector border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-orange-500 transition-all">
+                                        <i class="fas fa-feather text-2xl mb-2 text-blue-500"></i>
+                                        <span class="block font-bold">Quick Note</span>
+                                        <span class="text-xs text-gray-400 text-balance">Brief captures, ideas, and fast documentation.</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="target-pages-container" class="hidden">
+                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Target Length (Pages)</label>
+                                <input type="number" id="input-pages" value="10" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-xl">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Project Title</label>
+                                <input type="text" id="input-title" placeholder="e.g. The Architecture of Modern Pedagogy" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-medium text-lg">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Short Summary</label>
+                                <textarea id="input-summary" rows="3" placeholder="Describe the core objective..." class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-medium"></textarea>
+                            </div>
+
+                            <button onclick="saveNewKnowledge()" class="w-full orange-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all">
+                                Initialize Project
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        let selectedType = 'book';
+        function selectPromptType(btn, type) {
+            selectedType = type;
+            document.querySelectorAll('.type-selector').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
+            btn.classList.add('border-orange-500', 'bg-orange-50');
+            
+            const pageInput = document.getElementById('target-pages-container');
+            if(type === 'book') pageInput.classList.remove('hidden');
+            else pageInput.classList.add('hidden');
+        }
+
+        async function saveNewKnowledge() {
+            const title = document.getElementById('input-title').value;
+            const summary = document.getElementById('input-summary').value;
+            const pages = document.getElementById('input-pages').value;
+
+            if(!title) return notify("Please provide a title");
+
+            const id = await db.content.add({
+                type: selectedType,
+                title,
+                summary,
+                targetPages: selectedType === 'book' ? parseInt(pages) : 1,
+                text: '',
+                createdAt: new Date()
+            });
+
+            router('editor', id);
+        }
+
+        async function renderEditor(container, id) {
+            const item = await db.content.get(id);
+            container.innerHTML = `
+                <div class="p-8 max-w-5xl mx-auto">
+                    <div class="sticky top-0 bg-gray-50/90 backdrop-blur-md pt-4 pb-6 z-40">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-4">
+                                <button onclick="router('dashboard')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-orange-600 transition-all">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">${item.title}</h2>
+                                    <p class="text-xs font-bold text-orange-500 uppercase tracking-tighter">${item.type} Mode</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${item.type === 'book' ? `
+                                    <div class="bg-white border border-gray-200 px-4 py-2 rounded-xl flex items-center gap-3">
+                                        <span class="text-xs font-bold text-gray-400">Progress</span>
+                                        <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div id="book-progress-bar" class="h-full bg-orange-500 transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                        <span id="page-counter" class="text-xs font-bold text-gray-700">0/${item.targetPages} Pages</span>
+                                    </div>
+                                ` : ''}
+                                <button onclick="saveActiveEditor(${id})" class="orange-gradient text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-100">
+                                    <i class="fas fa-save mr-2"></i> Save
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Custom Toolbar -->
+                        <div class="bg-white border border-gray-100 rounded-2xl p-2 flex gap-1 shadow-sm">
+                            <button onclick="cmd('bold')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-bold"></i></button>
+                            <button onclick="cmd('italic')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-italic"></i></button>
+                            <button onclick="cmd('underline')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-underline"></i></button>
+                            <div class="w-px h-6 bg-gray-100 mx-2 self-center"></div>
+                            <button onclick="cmd('justifyLeft')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-align-left"></i></button>
+                            <button onclick="cmd('justifyCenter')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-align-center"></i></button>
+                            <div class="w-px h-6 bg-gray-100 mx-2 self-center"></div>
+                            <button onclick="cmd('insertUnorderedList')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-list"></i></button>
+                            <button onclick="cmd('formatBlock', 'h2')" class="px-3 h-10 rounded-lg hover:bg-gray-50 text-gray-500 font-bold">H1</button>
+                            <button onclick="cmd('formatBlock', 'h3')" class="px-3 h-10 rounded-lg hover:bg-gray-50 text-gray-500 font-bold">H2</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-[2rem] border border-gray-100 p-12 shadow-sm mt-4 min-h-[1000px]">
+                        <div id="editorContent" contenteditable="true" class="focus:outline-none" oninput="calculateProgress(${item.targetPages})">
+                            ${item.text || '<p>Begin your structured knowledge here...</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            if(item.type === 'book') calculateProgress(item.targetPages);
+        }
+
+        // --- UTILS ---
+
+        function cmd(c, v = null) {
+            document.execCommand(c, false, v);
+            document.getElementById('editorContent').focus();
+        }
+
+        async function saveActiveEditor(id) {
+            const text = document.getElementById('editorContent').innerHTML;
+            await db.content.update(id, { text });
+            notify("Knowledge Successfully Synchronized");
+        }
+
+        function calculateProgress(target) {
+            const content = document.getElementById('editorContent').innerText;
+            // Rough estimation: 1 page = ~2500 characters including formatting space
+            const chars = content.length;
+            const estimatedPages = Math.max(1, Math.ceil(chars / 2000));
+            
+            const progress = (estimatedPages / target) * 100;
+            const bar = document.getElementById('book-progress-bar');
+            const counter = document.getElementById('page-counter');
+            
+            if(bar) bar.style.width = `${Math.min(100, progress)}%`;
+            if(counter) counter.innerText = `${estimatedPages}/${target} Pages`;
+
+            // Visual page break simulation
+            handleVisualPageBreaks(chars);
+        }
+
+        function handleVisualPageBreaks(chars) {
+            const content = document.getElementById('editorContent');
+            // Logic to visually hint at page boundaries would go here
+            // Simplified for this version: just updating counters
+        }
+
+        function notify(msg) {
+            const toast = document.getElementById('custom-toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20');
+            toast.classList.add('translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('translate-y-20');
+            }, 3000);
+        }
+
+        async function renderLibrary(container, type) {
+            const items = await db.content.where('type').equals(type).toArray();
+            container.innerHTML = `
+                <div class="p-12 animate-in fade-in">
+                    <header class="flex justify-between items-center mb-12">
+                        <div>
+                            <h1 class="text-4xl font-extrabold text-gray-900 mb-2 capitalize">${type}s</h1>
+                            <p class="text-gray-500">Your collection of structured ${type} data.</p>
+                        </div>
+                    </header>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        ${items.map(item => `
+                            <div onclick="router('editor', ${item.id})" class="bg-white border border-gray-100 rounded-3xl p-8 hover:shadow-xl transition-all cursor-pointer group">
+                                <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center mb-6 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                                    <i class="fas ${type === 'book' ? 'fa-book' : 'fa-feather'}"></i>
+                                </div>
+                                <h4 class="text-xl font-bold mb-2">${item.title}</h4>
+                                <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.summary}</p>
+                                <div class="flex items-center justify-between mt-auto pt-6 border-t border-gray-50">
+                                    <span class="text-xs font-bold text-gray-300">Created ${new Date(item.createdAt).toLocaleDateString()}</span>
+                                    <button onclick="event.stopPropagation(); deleteDoc(${item.id}, '${type}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function deleteDoc(id, type) {
+            if(confirm("Permanently erase this knowledge?")) {
+                await db.content.delete(id);
+                router(type + 's');
             }
         }
 
-        // Initial Load
-        window.onload = () => {
-            renderDashboard();
-        };
+        // Initialize
+        window.onload = () => router('dashboard');
 
     </script>
 </body>
