@@ -3,28 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rwanda Ed-Tech Editor</title>
+    <title>NightShade Editor | Authoring Tool</title>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Oswald', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Oswald', 'sans-serif'] },
                     colors: {
                         night: {
-                            900: '#020617', // Main bg
-                            800: '#0f172a', // Panels
-                            700: '#1e293b', // Inputs
-                            600: '#334155', // Borders
-                            accent: '#38bdf8' // Cyan accent
+                            900: '#0f172a', // Main background
+                            800: '#1e293b', // Panels
+                            700: '#334155', // Borders
+                            600: '#475569', // Inputs
+                            accent: '#8b5cf6', // Violet accent
                         }
                     }
                 }
@@ -32,469 +28,510 @@
         }
     </script>
 
-    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-
-    <style>
-        body { font-family: 'Oswald', sans-serif; overflow: hidden; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        /* Custom Scrollbar for Editor */
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script> <style>
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* VS Code Layout Utilities */
+        .vscode-layout { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; overflow: hidden; }
+        .editor-grid { display: grid; grid-template-columns: 250px 1fr 1fr; height: 100%; }
         
-        .rich-editor:focus { outline: 2px solid #38bdf8; }
-        [contenteditable]:empty:before {
-            content: attr(placeholder);
-            color: #64748b;
-            display: block; 
+        /* A4 Page Simulation for Preview */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 0 auto;
+            background: white;
+            color: black;
+            font-family: Arial, sans-serif; /* Standard read font */
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transform: scale(0.7); /* Scaled to fit */
+            transform-origin: top center;
         }
+
+        /* Input Styling */
+        .custom-input {
+            background: #1e293b; border: 1px solid #334155; color: white;
+            width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px;
+        }
+        .custom-input:focus { outline: 2px solid #8b5cf6; border-color: transparent; }
+
+        .hide { display: none !important; }
     </style>
 </head>
-<body class="bg-night-900 text-gray-200 h-screen flex flex-col transition-colors duration-300">
+<body class="bg-night-900 text-gray-200 font-sans overflow-hidden">
 
-    <header class="h-14 bg-night-800 border-b border-night-600 flex items-center justify-between px-4 z-20">
-        <div class="flex items-center gap-4">
-            <div class="text-night-accent text-xl font-bold tracking-wider"><i class="fa-solid fa-book-open"></i> EDIT.RW</div>
-            <nav class="hidden md:flex gap-4 text-sm text-gray-400">
-                <a href="#" onclick="app.nav('home')" class="hover:text-white transition">Home</a>
-                <a href="#" onclick="app.nav('dashboard')" class="hover:text-white transition">Dashboard</a>
-                <a href="#" class="hover:text-white transition text-yellow-400"><i class="fa-solid fa-fire"></i> Streak: <span id="streak-count">3</span></a>
-            </nav>
-        </div>
+    <div id="landing-page" class="h-screen flex flex-col items-center justify-center bg-gradient-to-br from-night-900 via-night-800 to-black relative">
+        <h1 class="text-6xl font-bold mb-4 tracking-wider text-night-accent">NIGHT SHADE</h1>
+        <p class="text-xl text-gray-400 mb-8">Professional Educational Authoring Environment</p>
         
-        <div class="flex items-center gap-3">
-            <button onclick="app.toggleTheme()" class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-moon"></i></button>
-            <div class="relative group">
-                <button class="flex items-center gap-2 bg-night-700 px-3 py-1 rounded border border-night-600">
-                    <div class="w-6 h-6 rounded-full bg-night-accent"></div>
-                    <span class="text-sm">User</span>
-                </button>
-                <div class="absolute right-0 mt-2 w-48 bg-night-800 border border-night-600 rounded shadow-xl hidden group-hover:block">
-                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm">Profile</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm">Settings</a>
-                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm text-red-400">Logout</a>
-                </div>
-            </div>
-            <button onclick="app.paymentModal()" class="bg-night-accent text-night-900 px-4 py-1 rounded font-bold text-sm hover:bg-white transition">
-                Download PDF
+        <div class="space-x-4">
+            <button onclick="app.navTo('dashboard')" class="bg-night-accent hover:bg-violet-700 text-white px-8 py-3 rounded text-lg transition shadow-lg shadow-violet-900/50">
+                Start Writing
             </button>
         </div>
-    </header>
 
-    <div class="flex-1 flex overflow-hidden">
-        
-        <aside class="w-64 bg-night-900 border-r border-night-600 flex flex-col">
-            <div class="p-3 text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between">
-                <span>Explorer</span>
-                <button onclick="fileManager.createFolderPrompt()" class="hover:text-white" title="New Book/Folder"><i class="fa-solid fa-folder-plus"></i></button>
+        <div class="absolute bottom-0 w-full bg-night-800 p-6 flex justify-between border-t border-night-700">
+            <div class="text-gray-400">© 2026 NightShade Inc. Kigali.</div>
+            <div class="flex gap-4 text-2xl text-gray-500">
+                <i class="fab fa-github hover:text-white cursor-pointer"></i>
+                <i class="fab fa-twitter hover:text-white cursor-pointer"></i>
             </div>
-            <div id="file-tree" class="flex-1 overflow-y-auto p-2 space-y-1">
-                </div>
-        </aside>
-
-        <main class="flex-1 bg-night-800 flex flex-col min-w-0 relative">
-            
-            <div class="h-10 bg-night-800 border-b border-night-600 flex items-center px-3 gap-2 overflow-x-auto">
-                <button onclick="editor.format('bold')" class="w-8 h-8 rounded hover:bg-night-700" title="Bold"><i class="fa-solid fa-bold"></i></button>
-                <button onclick="editor.format('italic')" class="w-8 h-8 rounded hover:bg-night-700" title="Italic"><i class="fa-solid fa-italic"></i></button>
-                <button onclick="editor.format('underline')" class="w-8 h-8 rounded hover:bg-night-700" title="Underline"><i class="fa-solid fa-underline"></i></button>
-                <div class="w-px h-6 bg-night-600 mx-1"></div>
-                <button onclick="editor.insertDiagram()" class="px-2 h-8 rounded hover:bg-night-700 text-xs flex items-center gap-1"><i class="fa-solid fa-project-diagram"></i> Diagram</button>
-                <button onclick="editor.addCustomInput()" class="px-2 h-8 rounded hover:bg-night-700 text-xs flex items-center gap-1 ml-auto text-green-400"><i class="fa-solid fa-plus"></i> Add Section</button>
-            </div>
-
-            <div id="editor-canvas" class="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full pb-20">
-                <div class="text-center text-gray-500 mt-20">
-                    <i class="fa-solid fa-book text-4xl mb-4"></i>
-                    <p>Select a file to start editing or create a new one.</p>
-                </div>
-            </div>
-            
-            <div id="toast" class="absolute bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg transform translate-y-20 transition-transform">
-                <i class="fa-solid fa-check-circle"></i> Saved Successfully
-            </div>
-        </main>
-
-        <aside class="w-1/3 bg-white text-black border-l border-night-600 flex flex-col">
-            <div class="h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
-                <span class="text-xs font-bold text-gray-500">LIVE PREVIEW</span>
-                <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">A4</span>
-            </div>
-            <div id="preview-frame" class="flex-1 overflow-y-auto p-8 shadow-inner bg-gray-50">
-                <h1 class="text-3xl font-bold mb-4 border-b-2 border-black pb-2">Topic Name</h1>
-                <p class="text-gray-600 italic mb-4">Select an input to see changes here...</p>
-            </div>
-        </aside>
+        </div>
     </div>
 
-    <footer class="h-6 bg-night-accent text-night-900 text-xs flex items-center justify-between px-4 font-bold">
-        <div class="flex gap-4">
-            <span><i class="fa-solid fa-file-word"></i> Words: <span id="word-count">0</span></span>
-            <span><i class="fa-solid fa-paragraph"></i> Sections: <span id="section-count">0</span></span>
-        </div>
-        <div id="autosave-status">Synced <i class="fa-solid fa-cloud"></i></div>
-    </footer>
+    <div id="dashboard-page" class="h-screen flex flex-col hide p-10 bg-night-900">
+        <header class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-bold border-l-4 border-night-accent pl-4">Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <div class="bg-night-800 px-4 py-2 rounded border border-night-700">
+                    <span class="text-orange-400"><i class="fas fa-fire"></i> 12 Day Streak</span>
+                </div>
+                <button onclick="app.logout()" class="text-gray-400 hover:text-white">Logout</button>
+            </div>
+        </header>
 
-    <div id="pay-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-night-800 border border-night-600 p-8 rounded-lg max-w-md w-full shadow-2xl">
-            <h2 class="text-2xl text-white mb-2">Unlock Download</h2>
-            <p class="text-gray-400 mb-6 text-sm">Your document has <span class="text-night-accent">5 pages</span>. Total cost:</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div onclick="app.createProjectPrompt('single')" class="bg-night-800 p-6 rounded-lg border border-night-700 hover:border-night-accent cursor-pointer transition group">
+                <div class="text-4xl text-night-accent mb-4"><i class="fas fa-file-alt"></i></div>
+                <h3 class="text-xl font-bold group-hover:text-night-accent">New Lesson (Single Page)</h3>
+                <p class="text-gray-500 text-sm mt-2">Create a summary, lesson plan, or quick worksheet.</p>
+            </div>
+            <div onclick="app.createProjectPrompt('book')" class="bg-night-800 p-6 rounded-lg border border-night-700 hover:border-night-accent cursor-pointer transition group">
+                <div class="text-4xl text-blue-500 mb-4"><i class="fas fa-book"></i></div>
+                <h3 class="text-xl font-bold group-hover:text-blue-500">New Book</h3>
+                <p class="text-gray-500 text-sm mt-2">Comprehensive structure with chapters, covers, and front matter.</p>
+            </div>
+        </div>
+
+        <h3 class="text-xl mb-4 text-gray-400">Recent Projects</h3>
+        <div id="project-list" class="grid grid-cols-1 gap-4 overflow-y-auto">
+            </div>
+    </div>
+
+    <div id="editor-page" class="vscode-layout hide bg-night-900">
+        
+        <header class="bg-night-800 border-b border-night-700 flex justify-between items-center px-4 h-12 select-none">
+            <div class="flex items-center gap-4">
+                <span class="font-bold text-night-accent">NS EDITOR</span>
+                <span class="text-gray-500 text-sm">|</span>
+                <span id="active-project-name" class="text-sm font-medium">Untitled</span>
+            </div>
             
-            <div class="bg-night-900 p-4 rounded mb-6 border border-night-600">
-                <div class="flex justify-between text-xl font-bold text-white">
-                    <span>Total:</span>
-                    <span id="price-tag">500 RWF</span>
+            <div class="flex items-center gap-2">
+                <button id="toolbar-bold" class="p-1 hover:bg-night-700 rounded w-8" title="Bold"><i class="fas fa-bold"></i></button>
+                <button id="toolbar-italic" class="p-1 hover:bg-night-700 rounded w-8" title="Italic"><i class="fas fa-italic"></i></button>
+                <button id="toolbar-img" class="p-1 hover:bg-night-700 rounded w-8" title="Insert Image"><i class="fas fa-image"></i></button>
+                <div class="w-px h-4 bg-night-600 mx-2"></div>
+                <button onclick="app.toggleAutoSlide()" id="btn-slide" class="p-1 hover:bg-night-700 rounded text-xs px-2 border border-night-600">
+                    <i class="fas fa-play mr-1"></i> Auto Slide
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="app.openPaymentModal()" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded">
+                    <i class="fas fa-download mr-1"></i> Download
+                </button>
+                <button onclick="app.navTo('dashboard')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+        </header>
+
+        <div class="editor-grid">
+            
+            <div class="bg-night-900 border-r border-night-700 flex flex-col">
+                <div class="p-2 text-xs font-bold uppercase tracking-widest text-gray-500">Explorer</div>
+                <div class="p-2 flex gap-2 border-b border-night-700">
+                    <button onclick="app.createNewPage()" class="text-xs bg-night-700 hover:bg-night-600 px-2 py-1 rounded"><i class="fas fa-plus"></i> New Page</button>
+                    <button onclick="app.deleteCurrentPage()" class="text-xs bg-red-900/50 hover:bg-red-900 px-2 py-1 rounded text-red-200"><i class="fas fa-trash"></i></button>
+                </div>
+                <div id="file-tree" class="flex-1 overflow-y-auto p-2 text-sm">
+                    </div>
+            </div>
+
+            <div class="bg-night-800 flex flex-col border-r border-night-700 relative">
+                <div class="p-2 bg-night-800 border-b border-night-700 text-xs text-gray-400 flex justify-between">
+                    <span>INPUTS</span>
+                    <button onclick="app.addField()" class="text-night-accent hover:text-white">+ Add Field</button>
+                </div>
+                
+                <div id="input-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+                    </div>
+
+                <div class="absolute bottom-4 right-4 bg-night-900/80 p-2 rounded text-xs text-gray-400 pointer-events-none">
+                    Autosaving...
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <button class="bg-yellow-400 text-black py-3 rounded font-bold hover:bg-yellow-300">MTN MoMo</button>
-                <button class="bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-500">BK Digital</button>
+            <div class="bg-[#2e3338] overflow-y-auto flex flex-col items-center py-10 relative">
+                <div class="absolute top-2 right-2 z-10 bg-black/50 px-2 py-1 rounded text-xs text-white">Preview</div>
+                <div id="preview-container" class="a4-page">
+                    </div>
             </div>
 
-            <button onclick="document.getElementById('pay-modal').classList.add('hidden')" class="w-full text-gray-400 text-sm hover:text-white">Cancel</button>
+        </div>
+
+        <div class="bg-night-accent text-white h-6 flex justify-between items-center px-4 text-xs">
+            <div class="flex gap-4">
+                <span><i class="fas fa-code-branch"></i> main</span>
+                <span id="word-count">0 Words</span>
+                <span id="page-count">Page 1 of 1</span>
+            </div>
+            <div class="flex gap-4">
+                <span>Mode: Writer</span>
+                <span>UTF-8</span>
+                <span><i class="fas fa-bell"></i></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center">
+        <div class="bg-night-800 border border-night-700 p-8 rounded-lg max-w-md w-full shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-white">Unlock Export</h3>
+            <p class="text-gray-400 mb-6 text-sm">You have exceeded 250 free pages or are using premium layouts. Please select a payment method.</p>
+            
+            <div class="space-y-3 mb-6">
+                <button class="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded flex items-center justify-center gap-2">
+                    <i class="fas fa-mobile-alt"></i> MTN Mobile Money
+                </button>
+                <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded flex items-center justify-center gap-2">
+                    <i class="fas fa-mobile-alt"></i> Airtel Money
+                </button>
+                <button class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded flex items-center justify-center gap-2">
+                    <i class="fas fa-university"></i> BK (Bank of Kigali)
+                </button>
+            </div>
+
+            <div class="text-center text-xs text-gray-500 mb-4">Price: 500 RWF / 1000 RWF (Bulk)</div>
+            <button onclick="document.getElementById('payment-modal').classList.add('hidden')" class="w-full text-gray-400 hover:text-white text-sm">Cancel</button>
+        </div>
+    </div>
+
+    <div id="setup-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center">
+        <div class="bg-night-800 border border-night-700 p-6 rounded-lg w-96">
+            <h3 class="text-xl font-bold mb-4">Project Setup</h3>
+            <label class="block text-xs uppercase text-gray-500 mb-1">Project Name</label>
+            <input type="text" id="new-project-name" class="custom-input" placeholder="e.g. Science Chapter 1">
+            
+            <div id="book-options" class="hidden mt-4">
+                <label class="block text-xs uppercase text-gray-500 mb-1">Estimated Pages (Auto-generate)</label>
+                <input type="number" id="new-project-pages" class="custom-input" placeholder="10">
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="document.getElementById('setup-modal').classList.add('hidden')" class="px-4 py-2 text-gray-400 text-sm">Cancel</button>
+                <button onclick="app.confirmCreateProject()" class="px-4 py-2 bg-night-accent text-white rounded text-sm">Create</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- 1. INDEXEDDB SETUP (DEXIE) ---
-        const db = new Dexie("RwandaEdTechDB");
+        // --- 1. Database Setup (Dexie.js) ---
+        const db = new Dexie("NightShadeDB");
         db.version(1).stores({
-            folders: '++id, name, type, created', // Books
-            files: '++id, folderId, title, type, content, order' // Pages/Chapters
+            projects: "++id, name, type, createdAt",
+            pages: "++id, projectId, title, content, order" // content is JSON
         });
 
-        // --- 2. STATE & CONFIG ---
-        const state = {
-            currentFolderId: null,
-            currentFileId: null,
-            structure: {
-                "single_page": [
-                    { id: "title", label: "1. Title & Topic", type: "text", placeholder: "Enter Topic Name" },
-                    { id: "objective", label: "2. Objective", type: "textarea", placeholder: "What is this lesson about?" },
-                    { id: "keywords", label: "3. Keywords", type: "text", placeholder: "Term 1, Term 2, Formula..." },
-                    { id: "concepts", label: "4. Key Concepts", type: "textarea", placeholder: "Main ideas and rules..." },
-                    { id: "vocab", label: "5. Vocabulary", type: "text", placeholder: "New words..." },
-                    { id: "examples", label: "6. Examples", type: "textarea", placeholder: "Real world usage..." },
-                    { id: "questions", label: "7. Questions", type: "textarea", placeholder: "Things you don't understand..." },
-                    { id: "summary", label: "8. Summary", type: "textarea", placeholder: "Lesson in your own words (3-5 lines)" }
-                ],
-                "book_chapter": [
-                    { id: "chapter_title", label: "Chapter Title", type: "text", placeholder: "Chapter Name" },
-                    { id: "learning_obj", label: "Learning Objectives", type: "textarea", placeholder: "Bullets..." },
-                    { id: "intro", label: "Introduction", type: "textarea", placeholder: "Start here..." },
-                    { id: "core_content", label: "Core Explanation", type: "rich", placeholder: "Main content..." }
-                ]
-            }
-        };
-
-        // --- 3. UI CONTROLLER ---
+        // --- 2. Application Logic ---
         const app = {
-            init: async () => {
-                await fileManager.loadExplorer();
+            state: {
+                currentProject: null,
+                currentPage: null,
+                autoSlideInterval: null
             },
 
-            nav: (page) => {
-                alert(`Navigating to ${page}... (Placeholder for dashboard logic)`);
+            // --- Navigation ---
+            navTo: (pageId) => {
+                document.querySelectorAll('[id$="-page"]').forEach(el => el.classList.add('hide'));
+                document.getElementById(pageId + '-page').classList.remove('hide');
+                if(pageId === 'dashboard') app.loadProjects();
             },
 
-            toggleTheme: () => {
-                document.documentElement.classList.toggle('dark');
+            logout: () => {
+                app.state.currentProject = null;
+                app.navTo('landing');
             },
 
-            showToast: () => {
-                const t = document.getElementById('toast');
-                t.style.transform = "translateY(0)";
-                setTimeout(() => t.style.transform = "translateY(5rem)", 2000);
-            },
-
-            paymentModal: () => {
-                // Mock Logic for Pricing
-                const pages = Math.floor(Math.random() * 10) + 1; // Simulated count
-                const price = pages > 250 ? (pages * 2) + 1000 : 500;
-                
-                document.getElementById('price-tag').innerText = `${price} RWF`;
-                document.getElementById('pay-modal').classList.remove('hidden');
-                document.getElementById('pay-modal').style.display = 'flex';
-            }
-        };
-
-        // --- 4. FILE MANAGER ---
-        const fileManager = {
-            loadExplorer: async () => {
-                const tree = document.getElementById('file-tree');
-                tree.innerHTML = "";
-                const folders = await db.folders.toArray();
-
-                for (const folder of folders) {
-                    const div = document.createElement('div');
-                    div.className = "mb-2";
-                    
-                    // Folder Header
-                    div.innerHTML = `
-                        <div class="flex items-center justify-between px-2 py-1 text-sm text-gray-300 hover:bg-night-700 cursor-pointer group" onclick="fileManager.toggleFolder(${folder.id})">
-                            <span class="font-bold"><i class="fa-solid fa-book text-night-accent"></i> ${folder.name}</span>
-                            <div class="hidden group-hover:flex gap-2">
-                                <i class="fa-solid fa-file-circle-plus hover:text-white" onclick="event.stopPropagation(); fileManager.createFilePrompt(${folder.id})"></i>
-                                <i class="fa-solid fa-trash hover:text-red-400" onclick="event.stopPropagation(); fileManager.deleteFolder(${folder.id})"></i>
-                            </div>
+            // --- Project Management ---
+            loadProjects: async () => {
+                const projects = await db.projects.toArray();
+                const container = document.getElementById('project-list');
+                container.innerHTML = '';
+                projects.forEach(p => {
+                    const el = document.createElement('div');
+                    el.className = "bg-night-800 p-4 rounded border border-night-700 flex justify-between items-center";
+                    el.innerHTML = `
+                        <div>
+                            <div class="font-bold text-lg">${p.name}</div>
+                            <div class="text-xs text-gray-500 uppercase">${p.type} • Created ${new Date(p.createdAt).toLocaleDateString()}</div>
                         </div>
-                        <div id="folder-content-${folder.id}" class="ml-4 border-l border-night-600 hidden"></div>
+                        <button onclick="app.openProject(${p.id})" class="text-night-accent hover:text-white px-3 py-1 border border-night-700 rounded text-sm">Open</button>
                     `;
-                    tree.appendChild(div);
-                    await fileManager.loadFiles(folder.id);
-                }
-            },
-
-            loadFiles: async (folderId) => {
-                const container = document.getElementById(`folder-content-${folderId}`);
-                const files = await db.files.where({ folderId: folderId }).sortBy('order');
-                
-                container.innerHTML = "";
-                files.forEach(file => {
-                    const fDiv = document.createElement('div');
-                    fDiv.className = "px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-night-700 cursor-pointer flex justify-between group";
-                    fDiv.innerHTML = `
-                        <span onclick="editor.load(${file.id})"><i class="fa-regular fa-file-lines"></i> ${file.title || 'Untitled'}</span>
-                         <i class="fa-solid fa-xmark hidden group-hover:block hover:text-red-400" onclick="fileManager.deleteFile(${file.id})"></i>
-                    `;
-                    container.appendChild(fDiv);
+                    container.appendChild(el);
                 });
             },
 
-            toggleFolder: (id) => {
-                const el = document.getElementById(`folder-content-${id}`);
-                el.classList.toggle('hidden');
+            createProjectPrompt: (type) => {
+                app.tempType = type;
+                const modal = document.getElementById('setup-modal');
+                const bookOpts = document.getElementById('book-options');
+                document.getElementById('new-project-name').value = '';
+                
+                if (type === 'book') bookOpts.classList.remove('hidden');
+                else bookOpts.classList.add('hidden');
+                
+                modal.classList.remove('hidden');
             },
 
-            createFolderPrompt: async () => {
-                const name = prompt("Enter Book/Topic Name:");
-                if (!name) return;
+            confirmCreateProject: async () => {
+                const name = document.getElementById('new-project-name').value || "Untitled";
+                const pageCount = parseInt(document.getElementById('new-project-pages').value) || 1;
                 
-                const type = prompt("Type '1' for Single Page Style, '2' for Book Style") === '2' ? 'book' : 'single';
-                
-                const id = await db.folders.add({ name, type, created: new Date() });
-                
-                // If book, ask for page count to auto-generate
-                if (type === 'book') {
-                    const count = parseInt(prompt("How many chapters/pages to generate?", "5"));
-                    if (count) {
-                        for(let i=1; i<=count; i++) {
-                            await db.files.add({ folderId: id, title: `Chapter ${i}`, type: 'book_chapter', content: {}, order: i });
-                        }
+                const projectId = await db.projects.add({
+                    name: name,
+                    type: app.tempType,
+                    createdAt: Date.now()
+                });
+
+                // Auto-generate pages if book
+                if (app.tempType === 'book' && pageCount > 0) {
+                    for(let i=1; i<=pageCount; i++) {
+                        await db.pages.add({
+                            projectId,
+                            title: `Page ${i}`,
+                            order: i,
+                            content: app.getTemplate(app.tempType) // Default inputs
+                        });
                     }
                 } else {
-                    await db.files.add({ folderId: id, title: "Lesson Summary", type: 'single_page', content: {}, order: 1 });
+                    // Single page default
+                    await db.pages.add({
+                        projectId,
+                        title: "Lesson Summary",
+                        order: 1,
+                        content: app.getTemplate('single')
+                    });
+                }
+
+                document.getElementById('setup-modal').classList.add('hidden');
+                app.openProject(projectId);
+            },
+
+            // --- Editor Logic ---
+            openProject: async (id) => {
+                app.state.currentProject = await db.projects.get(id);
+                document.getElementById('active-project-name').innerText = app.state.currentProject.name;
+                app.navTo('editor');
+                app.loadFileTree();
+            },
+
+            loadFileTree: async () => {
+                const pages = await db.pages.where('projectId').equals(app.state.currentProject.id).sortBy('order');
+                const tree = document.getElementById('file-tree');
+                tree.innerHTML = '';
+
+                if (pages.length > 0) {
+                    // Load first page by default if none selected
+                    if (!app.state.currentPage) app.loadPage(pages[0].id);
+
+                    pages.forEach(page => {
+                        const item = document.createElement('div');
+                        item.className = `p-2 cursor-pointer hover:bg-night-700 flex items-center gap-2 ${app.state.currentPage?.id === page.id ? 'bg-night-700 text-white' : 'text-gray-400'}`;
+                        item.innerHTML = `<i class="fas fa-file-word text-blue-400"></i> <span>${page.title}.docx</span>`;
+                        item.onclick = () => app.loadPage(page.id);
+                        tree.appendChild(item);
+                    });
                 }
                 
-                fileManager.loadExplorer();
+                // Update stats
+                document.getElementById('page-count').innerText = `${pages.length} Pages`;
             },
 
-            createFilePrompt: async (folderId) => {
-                const title = prompt("Page Title:");
-                if(title) {
-                    await db.files.add({ folderId, title, type: 'single_page', content: {}, order: 99 });
-                    fileManager.loadFiles(folderId);
-                    // Ensure folder is open
-                    document.getElementById(`folder-content-${folderId}`).classList.remove('hidden');
+            loadPage: async (pageId) => {
+                const page = await db.pages.get(pageId);
+                app.state.currentPage = page;
+                app.loadFileTree(); // Refresh UI selection
+                app.renderInputs(page.content);
+                app.renderPreview(page.content);
+            },
+
+            // --- The "Input Engine" ---
+            getTemplate: (type) => {
+                if (type === 'single') {
+                    // The specific prompt requirements structure
+                    return [
+                        { label: "Title", key: "title", type: "text", value: "" },
+                        { label: "Objective", key: "objective", type: "textarea", value: "" },
+                        { label: "Keywords", key: "keywords", type: "text", value: "" },
+                        { label: "Key Concepts", key: "concepts", type: "textarea", value: "" },
+                        { label: "Vocabulary", key: "vocab", type: "textarea", value: "" },
+                        { label: "Examples", key: "examples", type: "textarea", value: "" },
+                        { label: "Summary", key: "summary", type: "textarea", value: "" }
+                    ];
+                } else {
+                    // Book generic page
+                    return [
+                        { label: "Chapter Title", key: "chapter", type: "text", value: "" },
+                        { label: "Body Content", key: "body", type: "textarea", value: "" }
+                    ];
                 }
             },
 
-            deleteFolder: async (id) => {
-                if(confirm("Delete this entire book?")) {
-                    await db.folders.delete(id);
-                    await db.files.where({folderId: id}).delete();
-                    fileManager.loadExplorer();
-                }
-            },
-            
-            deleteFile: async (id) => {
-                await db.files.delete(id);
-                // Refresh logic needed here (simplified for demo: reload explorer)
-                fileManager.loadExplorer();
-            }
-        };
+            renderInputs: (contentArray) => {
+                const container = document.getElementById('input-container');
+                container.innerHTML = '';
 
-        // --- 5. EDITOR ENGINE ---
-        const editor = {
-            currentFile: null,
+                contentArray.forEach((field, index) => {
+                    const wrap = document.createElement('div');
+                    wrap.className = "group relative";
 
-            load: async (fileId) => {
-                const file = await db.files.get(fileId);
-                editor.currentFile = file;
-                state.currentFileId = fileId;
-                
-                const canvas = document.getElementById('editor-canvas');
-                canvas.innerHTML = `
-                    <div class="mb-6 pb-2 border-b border-night-600">
-                        <input type="text" id="file-title-input" value="${file.title}" class="bg-transparent text-3xl font-bold w-full focus:outline-none text-white" oninput="editor.updateTitle(this.value)">
-                    </div>
-                `;
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = "flex justify-between mb-1";
+                    labelDiv.innerHTML = `
+                        <label class="text-xs uppercase font-bold text-gray-500">${field.label}</label>
+                        <div class="hidden group-hover:block gap-2 text-xs">
+                             <button onclick="app.deleteField(${index})" class="text-red-400 hover:text-red-300">Del</button>
+                        </div>
+                    `;
 
-                // Get schema based on type, or default to single page
-                const schema = state.structure[file.type] || state.structure['single_page'];
-
-                // Render Inputs
-                schema.forEach(field => {
-                    editor.createInputField(canvas, field, file.content[field.id] || "");
-                });
-
-                // Update Preview
-                preview.render(file);
-            },
-
-            createInputField: (container, field, value) => {
-                const wrapper = document.createElement('div');
-                wrapper.className = "mb-6 group relative";
-                
-                // Label + Tools
-                const header = document.createElement('div');
-                header.className = "flex justify-between text-night-accent text-sm uppercase font-bold mb-1";
-                header.innerHTML = `
-                    <span>${field.label}</span>
-                    <div class="opacity-0 group-hover:opacity-100 transition">
-                        <button onclick="editor.deleteField(this)" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-                wrapper.appendChild(header);
-
-                // Input Area
-                const inputDiv = document.createElement('div');
-                inputDiv.className = "rich-editor bg-night-700 p-3 rounded min-h-[60px] text-gray-200 border border-transparent transition-colors";
-                inputDiv.contentEditable = true;
-                inputDiv.setAttribute('placeholder', field.placeholder);
-                inputDiv.innerHTML = value;
-                
-                // Auto-save & Preview Trigger
-                inputDiv.oninput = () => {
-                    editor.saveContent(field.id, inputDiv.innerHTML);
-                };
-                
-                // Auto-slide logic (Enter key moves to next)
-                inputDiv.onkeydown = (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        const next = wrapper.nextElementSibling?.querySelector('.rich-editor');
-                        if (next) next.focus();
+                    let inputEl;
+                    if (field.type === 'textarea') {
+                        inputEl = document.createElement('textarea');
+                        inputEl.rows = 4;
+                    } else {
+                        inputEl = document.createElement('input');
+                        inputEl.type = 'text';
                     }
-                };
+                    
+                    inputEl.className = "custom-input";
+                    inputEl.value = field.value || "";
+                    // Auto-save logic
+                    inputEl.addEventListener('input', (e) => {
+                        contentArray[index].value = e.target.value;
+                        app.saveCurrentPage(contentArray);
+                        app.renderPreview(contentArray);
+                    });
+                    
+                    // UX: Enter key on simple input moves to next
+                    inputEl.addEventListener('keydown', (e) => {
+                        if(e.key === 'Enter' && field.type !== 'textarea') {
+                           // focus next logic could go here
+                        }
+                    });
 
-                wrapper.appendChild(inputDiv);
-                container.appendChild(wrapper);
+                    wrap.appendChild(labelDiv);
+                    wrap.appendChild(inputEl);
+                    container.appendChild(wrap);
+                });
             },
 
-            saveContent: (fieldId, html) => {
-                if(!editor.currentFile) return;
-                
-                // Update local object
-                editor.currentFile.content[fieldId] = html;
-                
-                // Update DB (Debounced in real app, direct here)
-                db.files.update(editor.currentFile.id, { content: editor.currentFile.content });
-                
-                // Update Preview
-                preview.render(editor.currentFile);
-                
-                // Update Counters
-                editor.updateCounters();
+            addField: () => {
+                const label = prompt("Field Name?");
+                if (!label) return;
+                const newField = { label: label, key: Date.now(), type: 'textarea', value: '' };
+                app.state.currentPage.content.push(newField);
+                app.saveCurrentPage(app.state.currentPage.content);
+                app.renderInputs(app.state.currentPage.content);
             },
 
-            updateTitle: (newTitle) => {
-                if(!editor.currentFile) return;
-                db.files.update(editor.currentFile.id, { title: newTitle });
-                editor.currentFile.title = newTitle;
-                preview.render(editor.currentFile);
-                // Refresh list title in UI (simple way)
-                fileManager.loadFiles(editor.currentFile.folderId);
-            },
-
-            format: (command) => {
-                document.execCommand(command, false, null);
-                // Trigger save on active element
-                if(document.activeElement.classList.contains('rich-editor')) {
-                    document.activeElement.oninput();
-                }
-            },
-
-            addCustomInput: () => {
-                const name = prompt("Name of new section?");
-                if(!name) return;
-                
-                const id = "custom_" + Date.now();
-                const field = { id: id, label: name, type: 'textarea', placeholder: 'Type here...' };
-                
-                // Add to DOM
-                editor.createInputField(document.getElementById('editor-canvas'), field, "");
-                
-                // Note: In a full app, we need to save this structural change to the File object config
-            },
-
-            insertDiagram: () => {
-                alert("Diagram Tool (D3.js / Chart.js) would open here.\nInserting a placeholder image for now.");
-                const imgHtml = `<img src="https://via.placeholder.com/400x200?text=Diagram+Placeholder" class="my-2 rounded border border-gray-600">`;
-                document.execCommand('insertHTML', false, imgHtml);
-            },
-
-            deleteField: (btn) => {
+            deleteField: (index) => {
                 if(confirm("Remove this section?")) {
-                    btn.closest('.group').remove();
-                    // Note: Would need to remove from data object too
+                    app.state.currentPage.content.splice(index, 1);
+                    app.saveCurrentPage(app.state.currentPage.content);
+                    app.renderInputs(app.state.currentPage.content);
+                    app.renderPreview(app.state.currentPage.content);
                 }
             },
 
-            updateCounters: () => {
-                const text = document.getElementById('editor-canvas').innerText;
-                document.getElementById('word-count').innerText = text.split(/\s+/).filter(w => w.length > 0).length;
-                document.getElementById('section-count').innerText = document.querySelectorAll('.rich-editor').length;
-                app.showToast();
-            }
-        };
+            saveCurrentPage: async (content) => {
+                await db.pages.update(app.state.currentPage.id, { content: content });
+                // Word count update
+                const text = content.map(c => c.value).join(" ");
+                document.getElementById('word-count').innerText = `${text.split(/\s+/).filter(w => w.length > 0).length} Words`;
+            },
 
-        // --- 6. PREVIEW RENDERER ---
-        const preview = {
-            render: (file) => {
-                const frame = document.getElementById('preview-frame');
-                if(!file) return;
+            createNewPage: async () => {
+                const count = await db.pages.where('projectId').equals(app.state.currentProject.id).count();
+                const id = await db.pages.add({
+                    projectId: app.state.currentProject.id,
+                    title: `Page ${count + 1}`,
+                    order: count + 1,
+                    content: app.getTemplate(app.state.currentProject.type)
+                });
+                app.loadPage(id);
+            },
 
-                let html = `
-                    <div class="font-sans text-black">
-                        <h1 class="text-4xl font-bold mb-2 uppercase text-blue-900 border-b-4 border-blue-900 pb-2">${file.title}</h1>
-                        <p class="text-sm text-gray-500 mb-6 text-right">Date: ${new Date().toLocaleDateString()}</p>
-                `;
+            deleteCurrentPage: async () => {
+                if(confirm("Delete this page?")) {
+                    await db.pages.delete(app.state.currentPage.id);
+                    // Reload tree and open first available
+                    app.state.currentPage = null;
+                    app.loadFileTree();
+                }
+            },
 
-                // Loop through content keys to render (Simplified order)
-                const order = Object.keys(file.content);
+            // --- Preview Engine ---
+            renderPreview: (content) => {
+                const container = document.getElementById('preview-container');
+                let html = ``;
                 
-                // We use the Structure definition to map labels if available, else usage raw keys
-                const schema = state.structure[file.type] || state.structure['single_page'];
-                
-                schema.forEach(field => {
-                    const content = file.content[field.id];
-                    if(content) {
-                        html += `
-                            <div class="mb-6">
-                                <h3 class="text-lg font-bold text-blue-800 uppercase mb-1 flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-blue-500 rounded-full inline-block"></span> ${field.label}
-                                </h3>
-                                <div class="text-gray-800 leading-relaxed text-sm bg-gray-50 p-2 rounded border-l-2 border-blue-200">
-                                    ${content}
-                                </div>
-                            </div>
-                        `;
+                content.forEach(field => {
+                    if (field.label.toLowerCase().includes('title')) {
+                        html += `<h1 style="font-size:24pt; font-weight:bold; margin-bottom:10px; border-bottom:2px solid #000;">${field.value}</h1>`;
+                    } else if (field.label.toLowerCase().includes('objective') || field.label.toLowerCase().includes('summary')) {
+                        html += `<div style="background:#f0f0f0; padding:10px; margin-bottom:15px; border-left:4px solid #333;">
+                                    <strong>${field.label}:</strong> <p>${field.value}</p>
+                                 </div>`;
+                    } else {
+                        html += `<h3 style="font-size:14pt; color:#444; margin-top:15px; text-transform:uppercase;">${field.label}</h3>`;
+                        html += `<p style="line-height:1.6; margin-bottom:10px;">${field.value.replace(/\n/g, '<br>')}</p>`;
                     }
                 });
+                
+                // Add page number footer
+                html += `<div style="position:absolute; bottom:10mm; right:10mm; font-size:10pt; color:gray;">Page ${app.state.currentPage.order}</div>`;
+                
+                container.innerHTML = html;
+            },
 
-                html += `</div>`;
-                frame.innerHTML = html;
+            // --- Features ---
+            toggleAutoSlide: () => {
+                const btn = document.getElementById('btn-slide');
+                if (app.state.autoSlideInterval) {
+                    clearInterval(app.state.autoSlideInterval);
+                    app.state.autoSlideInterval = null;
+                    btn.classList.remove('bg-green-600', 'text-white');
+                } else {
+                    btn.classList.add('bg-green-600', 'text-white');
+                    app.state.autoSlideInterval = setInterval(async () => {
+                        // Logic to find next page ID
+                        const pages = await db.pages.where('projectId').equals(app.state.currentProject.id).sortBy('order');
+                        const currentIndex = pages.findIndex(p => p.id === app.state.currentPage.id);
+                        if (currentIndex < pages.length - 1) {
+                            app.loadPage(pages[currentIndex + 1].id);
+                        } else {
+                            // Loop back to start
+                            app.loadPage(pages[0].id);
+                        }
+                    }, 3000); // 3 seconds per slide
+                }
+            },
+
+            openPaymentModal: () => {
+                // Logic: Check if user has > 250 pages total across DB or premium feature
+                // For demo, just open it
+                document.getElementById('payment-modal').classList.remove('hidden');
             }
         };
 
-        // Initialize App
-        app.init();
-
+        // Initialize
+        if (app.state.currentProject) {
+            app.navTo('dashboard'); // Or editor if persistence needed
+        }
     </script>
 </body>
 </html>
