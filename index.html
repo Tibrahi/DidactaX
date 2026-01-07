@@ -3,445 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Didactax — Structured Knowledge</title>
+    <title>DidactaX — Structured Knowledge Creation Platform</title>
+    
+    <!-- CDN Links -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --didac-orange: #FF6B00;
-            --didac-white: #FFFFFF;
-            --didac-dark: #1A1A1A;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #FDFDFD;
-            color: var(--didac-dark);
-        }
-
-        .orange-gradient {
-            background: linear-gradient(135deg, #FF6B00 0%, #FF9E57 100%);
-        }
-
-        /* Custom Scroll-ball */
-        #scrollBall {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 56px;
-            height: 56px;
-            background: var(--didac-orange);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.3);
-            z-index: 100;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #scrollBall:hover { transform: scale(1.1); }
-
-        /* Custom Editor Styles */
-        #editorContent {
-            min-height: 60vh;
-            outline: none;
-            line-height: 1.8;
-            font-size: 1.1rem;
-        }
-
-        .input-focus:focus {
-            border-color: var(--didac-orange);
-            box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
-        }
-
-        .page-break {
-            border-top: 2px dashed #E2E8F0;
-            margin: 40px 0;
-            position: relative;
-        }
-        .page-break::after {
-            content: 'Next Page Boundary';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #FDFDFD;
-            padding: 0 10px;
-            font-size: 10px;
-            color: #94A3B8;
-            text-transform: uppercase;
-        }
-    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/main.css">
 </head>
-<body class="bg-gray-50">
-
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-100 flex flex-col fixed h-full z-50">
-            <div class="p-8">
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="w-10 h-10 orange-gradient rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-200">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight">Didactax</span>
+<body class="bg-gray-900 text-gray-100 font-oswald">
+    <!-- Header -->
+    <header id="app-header" class="hidden bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-book text-white"></i>
                 </div>
-
-                <nav class="space-y-1">
-                    <button onclick="router('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
-                        <i class="fas fa-home"></i> Dashboard
-                    </button>
-                    <button onclick="router('books')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
-                        <i class="fas fa-book-open"></i> My Books
-                    </button>
-                    <button onclick="router('notes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50">
-                        <i class="fas fa-feather"></i> Notes
-                    </button>
-                </nav>
+                <span class="text-xl font-bold text-white">DidactaX</span>
             </div>
-            
-            <div class="mt-auto p-8">
-                <div class="bg-orange-50 p-4 rounded-2xl">
-                    <p class="text-xs font-bold text-orange-600 mb-1 uppercase">Cloud Status</p>
-                    <p class="text-xs text-orange-400">Local IndexDB Active</p>
-                </div>
+            <nav class="flex items-center gap-4 ml-8">
+                <a href="#" onclick="router('home'); return false;" class="nav-link px-4 py-2 rounded-lg hover:bg-gray-700 transition">Home</a>
+                <a href="#" onclick="router('dashboard'); return false;" class="nav-link px-4 py-2 rounded-lg hover:bg-gray-700 transition">Dashboard</a>
+                <a href="#" onclick="router('services'); return false;" class="nav-link px-4 py-2 rounded-lg hover:bg-gray-700 transition">Services</a>
+                <a href="#" onclick="router('profile'); return false;" class="nav-link px-4 py-2 rounded-lg hover:bg-gray-700 transition">Profile</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="book-representor" class="hidden px-4 py-2 bg-gray-700 rounded-lg">
+                <span class="text-sm font-semibold">Book: <span id="current-book-name">-</span></span>
             </div>
-        </aside>
+            <button id="logout-btn" onclick="handleLogout()" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">Logout</button>
+            <button id="login-btn" onclick="router('auth'); return false;" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">Login</button>
+        </div>
+    </header>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 ml-64 min-h-screen relative" id="app-viewport">
-            <!-- Content will be injected here -->
-        </main>
-    </div>
-
-    <!-- Floating Scroll-ball -->
-    <div id="scrollBall" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <i class="fas fa-arrow-up"></i>
-    </div>
-
-    <!-- Message Toast -->
-    <div id="custom-toast" class="fixed bottom-8 left-72 bg-gray-900 text-white px-6 py-3 rounded-2xl translate-y-20 transition-transform duration-300 z-50 shadow-2xl flex items-center gap-3">
-        <i class="fas fa-check-circle text-orange-500"></i>
-        <span id="toast-msg">Document Saved</span>
-    </div>
-
-    <script>
-        // DB Setup
-        const db = new Dexie("DidactaxKnowledge");
-        db.version(1).stores({
-            content: "++id, type, title, summary, targetPages, text, createdAt"
-        });
-
-        // Application State
-        const state = {
-            currentView: 'dashboard',
-            currentDocId: null
-        };
-
-        // Router
-        async function router(view, id = null) {
-            state.currentView = view;
-            state.currentDocId = id;
-            const viewport = document.getElementById('app-viewport');
-            
-            // Update Sidebar UI
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                const text = btn.innerText.toLowerCase();
-                if (text.includes(view)) {
-                    btn.classList.add('bg-orange-50', 'text-orange-600');
-                } else {
-                    btn.classList.remove('bg-orange-50', 'text-orange-600');
-                }
-            });
-
-            switch(view) {
-                case 'dashboard': renderDashboard(viewport); break;
-                case 'books': renderLibrary(viewport, 'book'); break;
-                case 'notes': renderLibrary(viewport, 'note'); break;
-                case 'create': renderPromptPage(viewport); break;
-                case 'editor': renderEditor(viewport, id); break;
-            }
-            window.scrollTo(0, 0);
-        }
-
-        // --- VIEWS ---
-
-        async function renderDashboard(container) {
-            const items = await db.content.toArray();
-            const books = items.filter(i => i.type === 'book');
-            const notes = items.filter(i => i.type === 'note');
-
-            container.innerHTML = `
-                <div class="p-12 animate-in fade-in duration-500">
-                    <header class="flex justify-between items-center mb-12">
-                        <div>
-                            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Workspace</h1>
-                            <p class="text-gray-500">Where ideas evolve into structured knowledge.</p>
+    <!-- Main App Container -->
+    <div id="app-container" class="min-h-screen">
+        <!-- Home Page View -->
+        <div id="home-view" class="hidden">
+            <!-- Hero Carousel -->
+            <section class="relative h-screen overflow-hidden">
+                <div id="hero-carousel" class="absolute inset-0">
+                    <div class="carousel-slide active bg-gradient-to-br from-indigo-900 via-purple-900 to-gray-900 flex items-center justify-center">
+                        <div class="text-center px-6 max-w-4xl">
+                            <h1 class="text-6xl font-bold mb-6 text-white">Create Structured Knowledge</h1>
+                            <p class="text-xl text-gray-300 mb-8">Transform ideas into comprehensive books and notes</p>
+                            <button onclick="router('auth')" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-lg font-semibold transition">Get Started</button>
                         </div>
-                        <button onclick="router('create')" class="orange-gradient text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-orange-200 hover:scale-105 transition-transform flex items-center gap-3">
-                            <i class="fas fa-plus"></i> Create Knowledge
+                    </div>
+                    <div class="carousel-slide bg-gradient-to-br from-blue-900 via-indigo-900 to-gray-900 flex items-center justify-center">
+                        <div class="text-center px-6 max-w-4xl">
+                            <h1 class="text-6xl font-bold mb-6 text-white">Organize Your Learning</h1>
+                            <p class="text-xl text-gray-300 mb-8">Build books with chapters, pages, and structured content</p>
+                            <button onclick="router('auth')" class="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition">Start Creating</button>
+                        </div>
+                    </div>
+                    <div class="carousel-slide bg-gradient-to-br from-purple-900 via-pink-900 to-gray-900 flex items-center justify-center">
+                        <div class="text-center px-6 max-w-4xl">
+                            <h1 class="text-6xl font-bold mb-6 text-white">Export & Share</h1>
+                            <p class="text-xl text-gray-300 mb-8">Download as PDF or DOCX, share your knowledge</p>
+                            <button onclick="router('auth')" class="px-8 py-4 bg-purple-600 hover:bg-purple-700 rounded-lg text-lg font-semibold transition">Join Now</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    <button class="carousel-dot active w-3 h-3 rounded-full bg-white" onclick="goToSlide(0)"></button>
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-gray-500" onclick="goToSlide(1)"></button>
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-gray-500" onclick="goToSlide(2)"></button>
+                </div>
+            </section>
+
+            <!-- Features Section -->
+            <section class="py-20 px-6 bg-gray-800">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-4xl font-bold text-center mb-12">Features</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <i class="fas fa-book-open text-4xl text-indigo-400 mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Book Creation</h3>
+                            <p class="text-gray-400">Create comprehensive books with chapters, covers, and structured content</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <i class="fas fa-file-alt text-4xl text-blue-400 mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Single Page Notes</h3>
+                            <p class="text-gray-400">Quick note-taking with structured sections and templates</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <i class="fas fa-download text-4xl text-purple-400 mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Export Options</h3>
+                            <p class="text-gray-400">Download your work as PDF or DOCX formats</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="bg-gray-900 border-t border-gray-800 py-12 px-6">
+                <div class="max-w-6xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                        <div>
+                            <h4 class="font-bold mb-4">DidactaX</h4>
+                            <p class="text-gray-400 text-sm">Structured knowledge creation platform</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-4">Features</h4>
+                            <ul class="text-gray-400 text-sm space-y-2">
+                                <li>Book Creation</li>
+                                <li>Note Taking</li>
+                                <li>Export Options</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-4">Support</h4>
+                            <ul class="text-gray-400 text-sm space-y-2">
+                                <li>Documentation</li>
+                                <li>Help Center</li>
+                                <li>Contact Us</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-4">Legal</h4>
+                            <ul class="text-gray-400 text-sm space-y-2">
+                                <li>Privacy Policy</li>
+                                <li>Terms of Service</li>
+                                <li>License</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+                        <p>&copy; 2024 DidactaX. All rights reserved.</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Auth View -->
+        <div id="auth-view" class="hidden min-h-screen flex items-center justify-center bg-gray-900 px-6">
+            <div class="max-w-md w-full bg-gray-800 rounded-2xl p-8 shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-book text-white text-2xl"></i>
+                    </div>
+                    <h2 id="auth-title" class="text-3xl font-bold mb-2">Welcome Back</h2>
+                    <p id="auth-subtitle" class="text-gray-400">Sign in to continue</p>
+                </div>
+                <form id="auth-form" onsubmit="handleAuth(event)">
+                    <div id="register-fields" class="hidden mb-4">
+                        <input type="text" id="auth-name" placeholder="Full Name" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg mb-4 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <input type="email" id="auth-email" placeholder="Email" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg mb-4 focus:outline-none focus:border-indigo-500">
+                    <input type="password" id="auth-password" placeholder="Password" required class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg mb-6 focus:outline-none focus:border-indigo-500">
+                    <button type="submit" id="auth-submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition mb-4">Sign In</button>
+                    <div class="text-center">
+                        <button type="button" id="auth-toggle" onclick="toggleAuthMode()" class="text-indigo-400 hover:text-indigo-300 text-sm">Create an account</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="hidden min-h-screen p-6">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">Dashboard</h1>
+                        <p class="text-gray-400">Manage your books and notes</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="bg-gray-800 px-6 py-3 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-fire text-orange-500"></i>
+                                <span class="font-semibold">Streak: <span id="streak-count">0</span> days</span>
+                            </div>
+                        </div>
+                        <button onclick="showCreatePrompt()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition">
+                            <i class="fas fa-plus mr-2"></i>Create New
                         </button>
-                    </header>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                            <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-book"></i></div>
-                            <h3 class="text-3xl font-bold">${books.length}</h3>
-                            <p class="text-gray-400 font-medium">Books in progress</p>
-                        </div>
-                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4"><i class="fas fa-sticky-note"></i></div>
-                            <h3 class="text-3xl font-bold">${notes.length}</h3>
-                            <p class="text-gray-400 font-medium">Digital Notes</p>
-                        </div>
-                    </div>
-
-                    <h2 class="text-2xl font-bold mb-6">Recently Edited</h2>
-                    <div class="grid grid-cols-1 gap-4">
-                        ${items.sort((a,b) => b.createdAt - a.createdAt).slice(0, 5).map(item => `
-                            <div onclick="router('editor', ${item.id})" class="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center group cursor-pointer hover:border-orange-200 transition-all">
-                                <div class="flex items-center gap-6">
-                                    <div class="text-gray-300 group-hover:text-orange-500 transition-colors"><i class="fas ${item.type === 'book' ? 'fa-book' : 'fa-feather'} text-xl"></i></div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-800">${item.title}</h4>
-                                        <p class="text-sm text-gray-400">${item.summary}</p>
-                                    </div>
-                                </div>
-                                <i class="fas fa-chevron-right text-gray-200 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                        `).join('')}
                     </div>
                 </div>
-            `;
-        }
 
-        function renderPromptPage(container) {
-            container.innerHTML = `
-                <div class="p-12 max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
-                    <button onclick="router('dashboard')" class="mb-8 text-gray-400 hover:text-orange-600 flex items-center gap-2 font-medium">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                <div id="works-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Works will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor View (3-Panel Layout) -->
+        <div id="editor-view" class="hidden h-screen flex">
+            <!-- Left Panel: File Explorer -->
+            <aside id="file-explorer" class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+                <div class="p-4 border-b border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-sm uppercase text-gray-400">Files</h3>
+                        <button onclick="createFolder()" class="text-gray-400 hover:text-white" title="New Folder">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                    </div>
+                    <button onclick="createFile()" class="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-sm font-semibold mb-2">
+                        <i class="fas fa-plus mr-2"></i>New File
                     </button>
+                </div>
+                <div id="file-tree" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <!-- File tree will be rendered here -->
+                </div>
+            </aside>
 
-                    <div class="bg-white p-12 rounded-[2.5rem] border border-gray-100 shadow-2xl">
-                        <h2 class="text-3xl font-extrabold mb-8">What are we building today?</h2>
-                        
-                        <div class="space-y-8">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Knowledge Type</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="selectPromptType(this, 'book')" class="type-selector border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-orange-500 transition-all">
-                                        <i class="fas fa-book text-2xl mb-2 text-orange-500"></i>
-                                        <span class="block font-bold">Comprehensive Book</span>
-                                        <span class="text-xs text-gray-400 text-balance">Chapters, page targets, and long-form structure.</span>
-                                    </button>
-                                    <button onclick="selectPromptType(this, 'note')" class="type-selector border-2 border-gray-100 p-6 rounded-2xl text-left hover:border-orange-500 transition-all">
-                                        <i class="fas fa-feather text-2xl mb-2 text-blue-500"></i>
-                                        <span class="block font-bold">Quick Note</span>
-                                        <span class="text-xs text-gray-400 text-balance">Brief captures, ideas, and fast documentation.</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="target-pages-container" class="hidden">
-                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Target Length (Pages)</label>
-                                <input type="number" id="input-pages" value="10" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-bold text-xl">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Project Title</label>
-                                <input type="text" id="input-title" placeholder="e.g. The Architecture of Modern Pedagogy" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-medium text-lg">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-3">Short Summary</label>
-                                <textarea id="input-summary" rows="3" placeholder="Describe the core objective..." class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-orange-500 transition-all font-medium"></textarea>
-                            </div>
-
-                            <button onclick="saveNewKnowledge()" class="w-full orange-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-orange-100 hover:shadow-orange-200 transition-all">
-                                Initialize Project
-                            </button>
-                        </div>
+            <!-- Main Panel: Editor -->
+            <main id="editor-main" class="flex-1 flex flex-col bg-gray-900">
+                <!-- Editor Toolbar -->
+                <div id="editor-toolbar" class="bg-gray-800 border-b border-gray-700 p-4">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="formatText('bold')" class="toolbar-btn" title="Bold"><i class="fas fa-bold"></i></button>
+                        <button onclick="formatText('italic')" class="toolbar-btn" title="Italic"><i class="fas fa-italic"></i></button>
+                        <button onclick="formatText('underline')" class="toolbar-btn" title="Underline"><i class="fas fa-underline"></i></button>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        <button onclick="formatText('justifyLeft')" class="toolbar-btn" title="Align Left"><i class="fas fa-align-left"></i></button>
+                        <button onclick="formatText('justifyCenter')" class="toolbar-btn" title="Align Center"><i class="fas fa-align-center"></i></button>
+                        <button onclick="formatText('justifyRight')" class="toolbar-btn" title="Align Right"><i class="fas fa-align-right"></i></button>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        <button onclick="formatText('insertUnorderedList')" class="toolbar-btn" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                        <button onclick="formatText('insertOrderedList')" class="toolbar-btn" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        <select onchange="formatText('formatBlock', this.value)" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+                            <option value="p">Paragraph</option>
+                            <option value="h1">Heading 1</option>
+                            <option value="h2">Heading 2</option>
+                            <option value="h3">Heading 3</option>
+                        </select>
+                        <input type="number" id="font-size" min="8" max="72" value="16" onchange="setFontSize(this.value)" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm" placeholder="Size">
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        <button onclick="formatText('foreColor', prompt('Enter color:', '#000000'))" class="toolbar-btn" title="Text Color"><i class="fas fa-palette"></i></button>
+                        <button onclick="formatText('backColor', prompt('Enter background color:', '#ffffff'))" class="toolbar-btn" title="Background Color"><i class="fas fa-fill"></i></button>
                     </div>
                 </div>
-            `;
-        }
 
-        let selectedType = 'book';
-        function selectPromptType(btn, type) {
-            selectedType = type;
-            document.querySelectorAll('.type-selector').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
-            btn.classList.add('border-orange-500', 'bg-orange-50');
-            
-            const pageInput = document.getElementById('target-pages-container');
-            if(type === 'book') pageInput.classList.remove('hidden');
-            else pageInput.classList.add('hidden');
-        }
-
-        async function saveNewKnowledge() {
-            const title = document.getElementById('input-title').value;
-            const summary = document.getElementById('input-summary').value;
-            const pages = document.getElementById('input-pages').value;
-
-            if(!title) return notify("Please provide a title");
-
-            const id = await db.content.add({
-                type: selectedType,
-                title,
-                summary,
-                targetPages: selectedType === 'book' ? parseInt(pages) : 1,
-                text: '',
-                createdAt: new Date()
-            });
-
-            router('editor', id);
-        }
-
-        async function renderEditor(container, id) {
-            const item = await db.content.get(id);
-            container.innerHTML = `
-                <div class="p-8 max-w-5xl mx-auto">
-                    <div class="sticky top-0 bg-gray-50/90 backdrop-blur-md pt-4 pb-6 z-40">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center gap-4">
-                                <button onclick="router('dashboard')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-orange-600 transition-all">
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                                <div>
-                                    <h2 class="text-xl font-bold text-gray-900">${item.title}</h2>
-                                    <p class="text-xs font-bold text-orange-500 uppercase tracking-tighter">${item.type} Mode</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                ${item.type === 'book' ? `
-                                    <div class="bg-white border border-gray-200 px-4 py-2 rounded-xl flex items-center gap-3">
-                                        <span class="text-xs font-bold text-gray-400">Progress</span>
-                                        <div class="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                            <div id="book-progress-bar" class="h-full bg-orange-500 transition-all duration-500" style="width: 0%"></div>
-                                        </div>
-                                        <span id="page-counter" class="text-xs font-bold text-gray-700">0/${item.targetPages} Pages</span>
-                                    </div>
-                                ` : ''}
-                                <button onclick="saveActiveEditor(${id})" class="orange-gradient text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-orange-100">
-                                    <i class="fas fa-save mr-2"></i> Save
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Custom Toolbar -->
-                        <div class="bg-white border border-gray-100 rounded-2xl p-2 flex gap-1 shadow-sm">
-                            <button onclick="cmd('bold')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-bold"></i></button>
-                            <button onclick="cmd('italic')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-italic"></i></button>
-                            <button onclick="cmd('underline')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-underline"></i></button>
-                            <div class="w-px h-6 bg-gray-100 mx-2 self-center"></div>
-                            <button onclick="cmd('justifyLeft')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-align-left"></i></button>
-                            <button onclick="cmd('justifyCenter')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-align-center"></i></button>
-                            <div class="w-px h-6 bg-gray-100 mx-2 self-center"></div>
-                            <button onclick="cmd('insertUnorderedList')" class="w-10 h-10 rounded-lg hover:bg-gray-50 text-gray-500"><i class="fas fa-list"></i></button>
-                            <button onclick="cmd('formatBlock', 'h2')" class="px-3 h-10 rounded-lg hover:bg-gray-50 text-gray-500 font-bold">H1</button>
-                            <button onclick="cmd('formatBlock', 'h3')" class="px-3 h-10 rounded-lg hover:bg-gray-50 text-gray-500 font-bold">H2</button>
-                        </div>
+                <!-- Editor Content Area -->
+                <div id="editor-content-area" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div id="single-page-form" class="hidden max-w-4xl mx-auto">
+                        <!-- Single Page Input Form (10 sections) -->
                     </div>
-
-                    <div class="bg-white rounded-[2rem] border border-gray-100 p-12 shadow-sm mt-4 min-h-[1000px]">
-                        <div id="editorContent" contenteditable="true" class="focus:outline-none" oninput="calculateProgress(${item.targetPages})">
-                            ${item.text || '<p>Begin your structured knowledge here...</p>'}
-                        </div>
+                    <div id="book-form" class="hidden max-w-4xl mx-auto">
+                        <!-- Book Creation Form -->
+                    </div>
+                    <div id="rich-editor" class="hidden">
+                        <div id="editor" contenteditable="true" class="min-h-full bg-white text-gray-900 p-8 rounded-lg shadow-lg focus:outline-none" style="font-family: 'Oswald', sans-serif;"></div>
                     </div>
                 </div>
-            `;
-            if(item.type === 'book') calculateProgress(item.targetPages);
-        }
 
-        // --- UTILS ---
-
-        function cmd(c, v = null) {
-            document.execCommand(c, false, v);
-            document.getElementById('editorContent').focus();
-        }
-
-        async function saveActiveEditor(id) {
-            const text = document.getElementById('editorContent').innerHTML;
-            await db.content.update(id, { text });
-            notify("Knowledge Successfully Synchronized");
-        }
-
-        function calculateProgress(target) {
-            const content = document.getElementById('editorContent').innerText;
-            // Rough estimation: 1 page = ~2500 characters including formatting space
-            const chars = content.length;
-            const estimatedPages = Math.max(1, Math.ceil(chars / 2000));
-            
-            const progress = (estimatedPages / target) * 100;
-            const bar = document.getElementById('book-progress-bar');
-            const counter = document.getElementById('page-counter');
-            
-            if(bar) bar.style.width = `${Math.min(100, progress)}%`;
-            if(counter) counter.innerText = `${estimatedPages}/${target} Pages`;
-
-            // Visual page break simulation
-            handleVisualPageBreaks(chars);
-        }
-
-        function handleVisualPageBreaks(chars) {
-            const content = document.getElementById('editorContent');
-            // Logic to visually hint at page boundaries would go here
-            // Simplified for this version: just updating counters
-        }
-
-        function notify(msg) {
-            const toast = document.getElementById('custom-toast');
-            document.getElementById('toast-msg').innerText = msg;
-            toast.classList.remove('translate-y-20');
-            toast.classList.add('translate-y-0');
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0');
-                toast.classList.add('translate-y-20');
-            }, 3000);
-        }
-
-        async function renderLibrary(container, type) {
-            const items = await db.content.where('type').equals(type).toArray();
-            container.innerHTML = `
-                <div class="p-12 animate-in fade-in">
-                    <header class="flex justify-between items-center mb-12">
-                        <div>
-                            <h1 class="text-4xl font-extrabold text-gray-900 mb-2 capitalize">${type}s</h1>
-                            <p class="text-gray-500">Your collection of structured ${type} data.</p>
-                        </div>
-                    </header>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        ${items.map(item => `
-                            <div onclick="router('editor', ${item.id})" class="bg-white border border-gray-100 rounded-3xl p-8 hover:shadow-xl transition-all cursor-pointer group">
-                                <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center mb-6 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
-                                    <i class="fas ${type === 'book' ? 'fa-book' : 'fa-feather'}"></i>
-                                </div>
-                                <h4 class="text-xl font-bold mb-2">${item.title}</h4>
-                                <p class="text-sm text-gray-400 mb-6 line-clamp-2">${item.summary}</p>
-                                <div class="flex items-center justify-between mt-auto pt-6 border-t border-gray-50">
-                                    <span class="text-xs font-bold text-gray-300">Created ${new Date(item.createdAt).toLocaleDateString()}</span>
-                                    <button onclick="event.stopPropagation(); deleteDoc(${item.id}, '${type}')" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        `).join('')}
+                <!-- Footer Counter -->
+                <div id="editor-footer" class="bg-gray-800 border-t border-gray-700 px-6 py-3 flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-6">
+                        <span>Words: <span id="word-count">0</span></span>
+                        <span>Characters: <span id="char-count">0</span></span>
+                        <span>Paragraphs: <span id="para-count">0</span></span>
+                        <span>Pages: <span id="page-count">0</span></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="saveCurrentWork()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-sm font-semibold">
+                            <i class="fas fa-save mr-2"></i>Save
+                        </button>
+                        <button onclick="downloadWork()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-semibold">
+                            <i class="fas fa-download mr-2"></i>Download
+                        </button>
                     </div>
                 </div>
-            `;
-        }
+            </main>
 
-        async function deleteDoc(id, type) {
-            if(confirm("Permanently erase this knowledge?")) {
-                await db.content.delete(id);
-                router(type + 's');
-            }
-        }
+            <!-- Right Panel: Preview -->
+            <aside id="preview-panel" class="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
+                <div class="p-4 border-b border-gray-700">
+                    <h3 class="font-bold text-sm uppercase text-gray-400">Preview</h3>
+                </div>
+                <div id="preview-content" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <!-- Preview will be rendered here -->
+                </div>
+            </aside>
+        </div>
 
-        // Initialize
-        window.onload = () => router('dashboard');
+        <!-- Services View -->
+        <div id="services-view" class="hidden min-h-screen p-6">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl font-bold mb-8">Payment Services</h1>
+                <div class="bg-gray-800 rounded-lg p-8">
+                    <p class="text-gray-400 mb-6">To download PDF or DOCX files, please make a payment based on page count:</p>
+                    <div class="space-y-4 mb-8">
+                        <div class="bg-gray-700 p-4 rounded">
+                            <p class="font-semibold mb-2">Pricing:</p>
+                            <ul class="text-gray-400 text-sm space-y-1">
+                                <li>• Up to 250 pages: 500 (local currency)</li>
+                                <li>• Above 250 pages: 1000+ (based on page calculation)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <button onclick="initiatePayment('mtn')" class="p-6 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-semibold">
+                            <i class="fas fa-mobile-alt text-2xl mb-2"></i><br>MTN Mobile Money
+                        </button>
+                        <button onclick="initiatePayment('airtel')" class="p-6 bg-red-600 hover:bg-red-700 rounded-lg font-semibold">
+                            <i class="fas fa-mobile-alt text-2xl mb-2"></i><br>Airtel Money
+                        </button>
+                        <button onclick="initiatePayment('bk')" class="p-6 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold">
+                            <i class="fas fa-university text-2xl mb-2"></i><br>Bank Transfer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    </script>
+        <!-- Profile View -->
+        <div id="profile-view" class="hidden min-h-screen p-6">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl font-bold mb-8">Profile & Settings</h1>
+                <div class="bg-gray-800 rounded-lg p-8">
+                    <div id="profile-content">
+                        <!-- Profile content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Popup Modal -->
+    <div id="custom-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div id="popup-content"></div>
+        </div>
+    </div>
+
+    <!-- Success Message Toast -->
+    <div id="success-toast" class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Success!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/editor.js"></script>
+    <script src="js/fileManager.js"></script>
+    <script src="js/forms.js"></script>
+    <script src="js/payment.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
