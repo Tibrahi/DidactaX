@@ -39,7 +39,7 @@ async function createFile() {
         return;
     }
     
-    const workId = window.currentWorkId ? window.currentWorkId() : null;
+    const workId = window.currentWorkId ? window.currentWorkId() : currentWorkId;
     if (!workId) {
         showError('Please create or open a work first');
         return;
@@ -51,9 +51,11 @@ async function createFile() {
     
     let pageCount = 1;
     if (type === 'book') {
-        const pages = prompt('How many pages do you want?', '10');
+        // Show popup for page count
+        const pages = await showPageCountPrompt();
         if (!pages) return;
         pageCount = parseInt(pages) || 1;
+        if (pageCount < 1) pageCount = 1;
     }
     
     const name = prompt('Enter file name:', `New ${type === 'book' ? 'Book' : 'Page'}`);
@@ -85,6 +87,43 @@ async function createFile() {
     await loadFileTree();
     loadFile(fileId);
     showSuccess(`File created with ${pageCount} page(s)`);
+}
+
+// Show page count prompt
+function showPageCountPrompt() {
+    return new Promise((resolve) => {
+        const popup = document.getElementById('custom-popup');
+        const content = document.getElementById('popup-content');
+        
+        content.innerHTML = `
+            <h3 class="text-xl font-bold mb-4">How many pages?</h3>
+            <div class="mb-4">
+                <input type="number" id="page-count-input" value="10" min="1" max="1000" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 text-white">
+                <p class="text-sm text-gray-400 mt-2">Pages will be created automatically</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="confirmPageCount()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold">
+                    Create Pages
+                </button>
+                <button onclick="cancelPageCount()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                    Cancel
+                </button>
+            </div>
+        `;
+        
+        popup.classList.remove('hidden');
+        
+        window.confirmPageCount = () => {
+            const count = document.getElementById('page-count-input').value;
+            popup.classList.add('hidden');
+            resolve(count);
+        };
+        
+        window.cancelPageCount = () => {
+            popup.classList.add('hidden');
+            resolve(null);
+        };
+    });
 }
 
 // Show file type selection prompt
@@ -189,9 +228,10 @@ async function createBookPageInputs(fileId, pageNum, totalPages) {
 
 // Load file tree
 async function loadFileTree() {
-    if (!currentWorkId) return;
+    const workId = window.currentWorkId ? window.currentWorkId() : currentWorkId;
+    if (!workId) return;
     
-    const files = await db.files.where('workId').equals(currentWorkId).toArray();
+    const files = await db.files.where('workId').equals(workId).toArray();
     const folders = await db.folders.where('workId').equals(workId).toArray();
     
     fileTree = { files, folders };
@@ -199,34 +239,86 @@ async function loadFileTree() {
     renderFileTree();
 }
 
-// Render file tree
+// Render file tree with hierarchy
 function renderFileTree() {
     const container = document.getElementById('file-tree');
     if (!container) return;
     
     let html = '';
-    const activeFileId = window.currentFileId ? window.currentFileId() : null;
+    const activeFileId = window.currentFileId ? window.currentFileId() : currentFileId;
     
-    // Render folders
+    // Helper function to render folder and its contents
+    function renderFolder(folder, level = 0) {
+        const indent = level * 20;
+        const children = fileTree.folders.filter(f => f.parentId === folder.id);
+        const folderFiles = fileTree.files.filter(f => f.parentId === folder.id);
+        const isExpanded = true; // Can add expand/collapse functionality later
+        
+        html += `
+            <div class="file-tree-item" style="padding-left: ${indent}px;" onclick="event.stopPropagation(); selectFolder(${folder.id})">
+                <i class="fas fa-folder${isExpanded ? '-open' : ''} text-yellow-400"></i>
+                <span class="flex-1">${folder.name}</span>
+                <div class="flex gap-1">
+                    <button onclick="event.stopPropagation(); renameItem(${folder.id}, 'folder')" class="text-gray-500 hover:text-blue-400" title="Rename">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteItem(${folder.id}, 'folder')" class="text-gray-500 hover:text-red-400" title="Delete">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        if (isExpanded) {
+            // Render files in this folder
+            folderFiles.forEach(file => {
+                const isActive = activeFileId === file.id;
+                const fileIcon = file.extension === '.pdf' ? 'fa-file-pdf' : file.extension === '.docx' ? 'fa-file-word' : 'fa-file';
+                html += `
+                    <div class="file-tree-item ${isActive ? 'active' : ''}" style="padding-left: ${indent + 20}px;" onclick="event.stopPropagation(); loadFile(${file.id})">
+                        <i class="fas ${fileIcon} text-blue-400"></i>
+                        <span class="flex-1">${file.name}</span>
+                        <div class="flex gap-1">
+                            <button onclick="event.stopPropagation(); renameItem(${file.id}, 'file')" class="text-gray-500 hover:text-blue-400" title="Rename">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteItem(${file.id}, 'file')" class="text-gray-500 hover:text-red-400" title="Delete">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Render subfolders
+            children.forEach(child => renderFolder(child, level + 1));
+        }
+    }
+    
+    // Render root folders
     if (fileTree.folders) {
         fileTree.folders.filter(f => !f.parentId).forEach(folder => {
-            html += `
-                <div class="file-tree-item" onclick="selectFolder(${folder.id})">
-                    <i class="fas fa-folder"></i>
-                    <span>${folder.name}</span>
-                </div>
-            `;
+            renderFolder(folder, 0);
         });
     }
     
-    // Render files
+    // Render root files (not in any folder)
     if (fileTree.files) {
         fileTree.files.filter(f => !f.parentId).forEach(file => {
             const isActive = activeFileId === file.id;
+            const fileIcon = file.extension === '.pdf' ? 'fa-file-pdf' : file.extension === '.docx' ? 'fa-file-word' : 'fa-file';
             html += `
                 <div class="file-tree-item ${isActive ? 'active' : ''}" onclick="loadFile(${file.id})">
-                    <i class="fas fa-file${file.extension === '.pdf' ? '-pdf' : ''}"></i>
-                    <span>${file.name}</span>
+                    <i class="fas ${fileIcon} text-blue-400"></i>
+                    <span class="flex-1">${file.name}</span>
+                    <div class="flex gap-1">
+                        <button onclick="event.stopPropagation(); renameItem(${file.id}, 'file')" class="text-gray-500 hover:text-blue-400" title="Rename">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteItem(${file.id}, 'file')" class="text-gray-500 hover:text-red-400" title="Delete">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
                 </div>
             `;
         });
@@ -248,17 +340,33 @@ async function loadFile(fileId) {
     // Load inputs for this file
     const inputs = await db.inputs.where('fileId').equals(fileId).toArray();
     
+    // Reset to first page for books
+    if (file.type === 'book') {
+        const pageNumbers = [...new Set(inputs.map(i => i.pageNum || 1).filter(Boolean))].sort((a, b) => a - b);
+        if (window.currentPageNum !== undefined) {
+            window.currentPageNum = pageNumbers[0] || 1;
+        }
+    }
+    
     if (file.type === 'single') {
-        renderSinglePageForm(inputs);
+        if (window.renderSinglePageForm) {
+            window.renderSinglePageForm(inputs);
+        }
     } else if (file.type === 'book') {
-        renderBookForm(inputs, file);
+        if (window.renderBookForm) {
+            window.renderBookForm(inputs, file);
+        }
     }
     
     // Update preview
-    updatePreview(inputs);
+    if (window.updatePreview) {
+        window.updatePreview(inputs);
+    }
     
     // Reload file tree to show active state
     await loadFileTree();
+    
+    return Promise.resolve();
 }
 
 // Select folder

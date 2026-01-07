@@ -11,8 +11,9 @@ db.version(1).stores({
     settings: '++id, userId, theme, fontSize, autoSave, autoCorrect'
 });
 
-// Auto-correct dictionary (can be expanded)
+// Auto-correct dictionary (expanded)
 const dictionary = {
+    // Common typos
     'teh': 'the',
     'adn': 'and',
     'taht': 'that',
@@ -22,7 +23,35 @@ const dictionary = {
     'definately': 'definitely',
     'accomodate': 'accommodate',
     'begining': 'beginning',
-    'existance': 'existence'
+    'existance': 'existence',
+    'neccessary': 'necessary',
+    'occassion': 'occasion',
+    'embarass': 'embarrass',
+    'millenium': 'millennium',
+    'occurence': 'occurrence',
+    'seige': 'siege',
+    'thier': 'their',
+    'wierd': 'weird',
+    'acheive': 'achieve',
+    'beleive': 'believe',
+    'calender': 'calendar',
+    'cemetary': 'cemetery',
+    'concieve': 'conceive',
+    'definately': 'definitely',
+    'existance': 'existence',
+    'goverment': 'government',
+    'grammer': 'grammar',
+    'harrass': 'harass',
+    'independant': 'independent',
+    'liason': 'liaison',
+    'maintainance': 'maintenance',
+    'neccessary': 'necessary',
+    'occured': 'occurred',
+    'priviledge': 'privilege',
+    'seperate': 'separate',
+    'suprise': 'surprise',
+    'untill': 'until',
+    'writting': 'writing'
 };
 
 // Export database instance

@@ -226,12 +226,25 @@ async function loadEditor(workId) {
         return;
     }
     
+    // Load book metadata if it's a book
+    if (work.type === 'book' && window.loadBookMetadata) {
+        try {
+            await window.loadBookMetadata(workId);
+        } catch (e) {
+            console.error('Error loading book metadata:', e);
+        }
+    }
+    
     // Update book representor
     const bookRep = document.getElementById('book-representor');
     const bookName = document.getElementById('current-book-name');
     if (bookRep && bookName) {
-        bookRep.classList.remove('hidden');
-        bookName.textContent = work.title;
+        if (work.type === 'book') {
+            bookRep.classList.remove('hidden');
+            bookName.textContent = work.title;
+        } else {
+            bookRep.classList.add('hidden');
+        }
     }
     
     // Load file tree
@@ -241,10 +254,18 @@ async function loadEditor(workId) {
     const files = await db.files.where('workId').equals(workId).toArray();
     if (files.length === 0) {
         // Auto-create a file
-        await createFile();
+        try {
+            await createFile();
+        } catch (e) {
+            console.error('Error creating file:', e);
+        }
     } else {
         // Load first file
-        await loadFile(files[0].id);
+        try {
+            await loadFile(files[0].id);
+        } catch (e) {
+            console.error('Error loading file:', e);
+        }
     }
 }
 
@@ -329,6 +350,9 @@ function toggleAutoCorrect(enabled) {
 
 // Initialize application
 async function init() {
+    // Load theme
+    loadTheme();
+    
     // Check authentication
     const isAuthenticated = await checkAuth();
     
@@ -354,21 +378,113 @@ async function init() {
 }
 
 // Auto-slide to next page (for book navigation)
-function autoSlideNextPage() {
-    if (currentView() === 'editor' && window.fileTree && window.fileTree.files) {
-        const file = window.fileTree.files.find(f => f.id === currentFileId);
-        if (file && file.type === 'book') {
-            setTimeout(() => {
-                if (window.navigatePage) {
-                    window.navigatePage(1);
+let autoSlideInterval = null;
+let autoSlideEnabled = false;
+
+function toggleAutoSlide() {
+    autoSlideEnabled = !autoSlideEnabled;
+    
+    if (autoSlideEnabled) {
+        startAutoSlide();
+        showSuccess('Auto-slide enabled');
+    } else {
+        stopAutoSlide();
+        showSuccess('Auto-slide disabled');
+    }
+    
+    // Update button state
+    const btn = document.getElementById('auto-slide-btn');
+    if (btn) {
+        btn.classList.toggle('bg-green-600', autoSlideEnabled);
+        btn.classList.toggle('bg-gray-700', !autoSlideEnabled);
+    }
+}
+
+function startAutoSlide() {
+    stopAutoSlide(); // Clear any existing interval
+    
+    autoSlideInterval = setInterval(() => {
+        if (currentView() === 'editor') {
+            const fileId = window.currentFileId ? window.currentFileId() : null;
+            if (fileId && window.fileTree && window.fileTree.files) {
+                const file = window.fileTree.files.find(f => f.id === fileId);
+                if (file && file.type === 'book' && window.navigatePage) {
+                    try {
+                        // Get current page number
+                        const currentInputs = window.currentInputs || [];
+                        if (currentInputs.length === 0) return;
+                        
+                        const pageNumbers = [...new Set(currentInputs.map(i => i.pageNum || 1).filter(Boolean))].sort((a, b) => a - b);
+                        if (pageNumbers.length === 0) return;
+                        
+                        const currentPage = window.currentPageNum || pageNumbers[0];
+                        const currentIndex = pageNumbers.indexOf(currentPage);
+                        
+                        if (currentIndex >= 0 && currentIndex < pageNumbers.length - 1) {
+                            window.navigatePage(1);
+                        } else if (currentIndex === pageNumbers.length - 1) {
+                            // Loop back to first page
+                            if (window.jumpToPage) {
+                                window.jumpToPage(pageNumbers[0]);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Auto-slide error:', e);
+                    }
                 }
-            }, 5000); // Auto-advance after 5 seconds of inactivity
+            }
         }
+    }, 10000); // Auto-advance every 10 seconds
+}
+
+function stopAutoSlide() {
+    if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = null;
     }
 }
 
 // Initialize on load
 window.addEventListener('DOMContentLoaded', init);
+
+// Theme toggle
+let isDarkMode = true;
+
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('light', !isDarkMode);
+    document.body.classList.toggle('dark', isDarkMode);
+    
+    // Update icon
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+        icon.className = isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+    }
+    
+    // Save preference
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    showSuccess(`Switched to ${isDarkMode ? 'dark' : 'light'} mode`);
+}
+
+// Load theme preference
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        isDarkMode = false;
+        document.body.classList.add('light');
+        document.body.classList.remove('dark');
+    } else {
+        isDarkMode = true;
+        document.body.classList.add('dark');
+        document.body.classList.remove('light');
+    }
+    
+    // Update icon
+    const icon = document.getElementById('theme-icon');
+    if (icon) {
+        icon.className = isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+    }
+}
 
 // Export utilities
 window.showSuccess = showSuccess;
@@ -384,4 +500,8 @@ window.loadEditor = loadEditor;
 window.deleteWork = deleteWork;
 window.loadProfile = loadProfile;
 window.toggleAutoCorrect = toggleAutoCorrect;
-window.autoSlideNextPage = autoSlideNextPage;
+window.toggleAutoSlide = toggleAutoSlide;
+window.startAutoSlide = startAutoSlide;
+window.stopAutoSlide = stopAutoSlide;
+window.toggleTheme = toggleTheme;
+window.loadTheme = loadTheme;

@@ -197,10 +197,53 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
-    #file-explorer,
+@media (max-width: 1024px) {
     #preview-panel {
         @apply hidden;
+    }
+    
+    #file-explorer {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    #file-explorer {
+        @apply hidden;
+    }
+    
+    #editor-toolbar {
+        overflow-x: auto;
+    }
+    
+    #editor-toolbar > div {
+        min-width: max-content;
+    }
+    
+    .input-section {
+        padding: 1rem;
+    }
+    
+    #app-header nav {
+        @apply hidden;
+    }
+    
+    #app-header {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .carousel-slide h1 {
+        font-size: 2rem !important;
+    }
+    
+    .carousel-slide p {
+        font-size: 1rem !important;
+    }
+    
+    #editor-content-area {
+        padding: 1rem;
     }
 }
 

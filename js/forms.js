@@ -14,33 +14,55 @@ function renderSinglePageForm(inputs) {
     bookForm.classList.add('hidden');
     
     currentInputs = inputs.sort((a, b) => a.order - b.order);
+    window.currentInputs = currentInputs;
     
-    let html = '<div class="space-y-6">';
+    let html = '<div class="space-y-6 animate-fade-in">';
     
     currentInputs.forEach((input, index) => {
+        const placeholder = input.placeholder || '';
+        const description = input.description || '';
+        const isCompleted = input.value && input.value.trim().length > 0;
+        
         html += `
-            <div class="input-section" data-input-id="${input.id}">
+            <div class="input-section ${isCompleted ? 'border-green-500' : ''}" data-input-id="${input.id}" data-order="${input.order}">
                 <div class="flex items-center justify-between mb-3">
-                    <label>${input.label}</label>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-indigo-400">${index + 1}</span>
+                        <label class="text-sm font-semibold text-gray-300 uppercase tracking-wider">${input.label}</label>
+                        ${description ? `<i class="fas fa-info-circle text-gray-500 cursor-help" title="${description}"></i>` : ''}
+                    </div>
                     <div class="input-controls">
-                        <button onclick="renameInput(${input.id})" class="btn-rename">
+                        <button onclick="renameInput(${input.id})" class="btn-rename" title="Rename">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="removeInput(${input.id})" class="btn-remove">
+                        <button onclick="removeInput(${input.id})" class="btn-remove" title="Remove">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 ${input.type === 'textarea' ? 
-                    `<textarea id="input-${input.id}" oninput="updateInput(${input.id}, this.value)" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 text-white">${input.value || ''}</textarea>` :
-                    `<input type="text" id="input-${input.id}" oninput="updateInput(${input.id}, this.value)" value="${input.value || ''}" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 text-white">`
+                    `<textarea 
+                        id="input-${input.id}" 
+                        oninput="handleInputChange(${input.id}, this.value, ${index})" 
+                        onkeydown="handleInputKeydown(event, ${index})"
+                        placeholder="${placeholder}"
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 text-white resize-y min-h-[120px]">${input.value || ''}</textarea>` :
+                    `<input 
+                        type="text" 
+                        id="input-${input.id}" 
+                        oninput="handleInputChange(${input.id}, this.value, ${index})" 
+                        onkeydown="handleInputKeydown(event, ${index})"
+                        value="${input.value || ''}" 
+                        placeholder="${placeholder}"
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 text-white">`
                 }
+                ${isCompleted ? '<div class="mt-2 text-xs text-green-400"><i class="fas fa-check-circle mr-1"></i>Completed</div>' : ''}
             </div>
         `;
     });
     
     html += `
-        <div class="mt-6">
+        <div class="mt-6 flex gap-3">
             <button onclick="addNewInput()" class="btn-add">
                 <i class="fas fa-plus mr-2"></i>Add New Input
             </button>
@@ -52,6 +74,9 @@ function renderSinglePageForm(inputs) {
     
     // Auto-focus first empty input
     autoFocusNextInput();
+    
+    // Update preview
+    updatePreview(currentInputs);
 }
 
 // Render book form
@@ -68,6 +93,7 @@ function renderBookForm(inputs, file) {
         if (a.pageNum !== b.pageNum) return a.pageNum - b.pageNum;
         return a.order - b.order;
     });
+    window.currentInputs = currentInputs;
     
     // Group inputs by page
     const pages = {};
@@ -146,6 +172,69 @@ function navigatePage(direction) {
         const file = (window.fileTree && window.fileTree.files) ? window.fileTree.files.find(f => f.id === fileId) : null;
         if (file) {
             renderBookForm(currentInputs, file);
+        }
+    }
+}
+
+// Handle input change with auto-move functionality
+async function handleInputChange(inputId, value, index) {
+    await updateInput(inputId, value);
+    
+    // Check if input is completed and auto-move to next
+    if (value && value.trim().length > 0) {
+        const inputEl = document.getElementById(`input-${inputId}`);
+        if (inputEl) {
+            inputEl.closest('.input-section').classList.add('border-green-500');
+        }
+        
+        // Auto-move to next empty input after a delay
+        setTimeout(() => {
+            autoMoveToNextEmptyInput(index);
+        }, 500);
+    }
+}
+
+// Handle keyboard events for input navigation
+function handleInputKeydown(event, currentIndex) {
+    // Tab to move to next input
+    if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault();
+        const nextIndex = currentIndex + 1;
+        if (nextIndex < currentInputs.length) {
+            const nextInput = document.getElementById(`input-${currentInputs[nextIndex].id}`);
+            if (nextInput) {
+                nextInput.focus();
+            }
+        }
+    }
+    
+    // Shift+Tab to move to previous input
+    if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault();
+        const prevIndex = currentIndex - 1;
+        if (prevIndex >= 0) {
+            const prevInput = document.getElementById(`input-${currentInputs[prevIndex].id}`);
+            if (prevInput) {
+                prevInput.focus();
+            }
+        }
+    }
+}
+
+// Auto-move to next empty input
+function autoMoveToNextEmptyInput(currentIndex) {
+    for (let i = currentIndex + 1; i < currentInputs.length; i++) {
+        const input = currentInputs[i];
+        const inputEl = document.getElementById(`input-${input.id}`);
+        if (inputEl) {
+            const value = inputEl.value || inputEl.textContent || inputEl.innerHTML || '';
+            if (!value || value.trim() === '') {
+                inputEl.focus();
+                if (inputEl.scrollIntoView) {
+                    inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                break;
+            }
         }
     }
 }
@@ -258,21 +347,95 @@ function updatePreview(inputs = currentInputs) {
     const container = document.getElementById('preview-content');
     if (!container) return;
     
-    let html = '<div class="space-y-4">';
+    // Check if this is a book with pages
+    const hasPages = inputs.some(i => i.pageNum);
     
-    inputs.slice(0, 10).forEach(input => {
-        if (input.value) {
-            html += `
-                <div class="preview-item">
-                    <h4>${input.label}</h4>
-                    <p>${input.value.substring(0, 100)}${input.value.length > 100 ? '...' : ''}</p>
+    if (hasPages) {
+        // Group by page
+        const pages = {};
+        inputs.forEach(input => {
+            const page = input.pageNum || 1;
+            if (!pages[page]) pages[page] = [];
+            pages[page].push(input);
+        });
+        
+        const pageNumbers = Object.keys(pages).map(Number).sort((a, b) => a - b);
+        const currentPage = currentPageNum || 1;
+        
+        let html = `
+            <div class="space-y-4">
+                <div class="bg-gray-700 p-3 rounded-lg mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold text-sm">Page ${currentPage} of ${pageNumbers.length}</span>
+                        <div class="flex gap-2">
+                            <button onclick="navigatePage(-1)" class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs" ${currentPage === 1 ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button onclick="navigatePage(1)" class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs" ${currentPage === pageNumbers.length ? 'disabled' : ''}>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-wrap">
+                        ${pageNumbers.map(p => `
+                            <button onclick="jumpToPage(${p})" class="px-2 py-1 text-xs rounded ${p === currentPage ? 'bg-indigo-600' : 'bg-gray-600 hover:bg-gray-500'}">
+                                ${p}
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
-            `;
-        }
-    });
-    
-    html += '</div>';
-    container.innerHTML = html || '<p class="text-gray-500 text-sm">No content to preview</p>';
+        `;
+        
+        // Show current page inputs
+        const currentPageInputs = pages[currentPage] || [];
+        currentPageInputs.forEach(input => {
+            if (input.value) {
+                const displayValue = input.value.replace(/<[^>]*>/g, '').substring(0, 200);
+                html += `
+                    <div class="preview-item">
+                        <h4 class="text-indigo-400 font-semibold mb-2">${input.label}</h4>
+                        <p class="text-sm text-gray-300">${displayValue}${input.value.length > 200 ? '...' : ''}</p>
+                    </div>
+                `;
+            }
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    } else {
+        // Single page preview
+        let html = '<div class="space-y-4">';
+        
+        inputs.forEach(input => {
+            if (input.value) {
+                const displayValue = input.value.replace(/<[^>]*>/g, '').substring(0, 150);
+                html += `
+                    <div class="preview-item">
+                        <h4 class="text-indigo-400 font-semibold mb-2">${input.label}</h4>
+                        <p class="text-sm text-gray-300">${displayValue}${input.value.length > 150 ? '...' : ''}</p>
+                    </div>
+                `;
+            }
+        });
+        
+        html += '</div>';
+        container.innerHTML = html || '<p class="text-gray-500 text-sm">No content to preview</p>';
+    }
+}
+
+// Jump to specific page
+function jumpToPage(pageNum) {
+    currentPageNum = pageNum;
+    window.currentPageNum = currentPageNum;
+    updateCurrentFileId();
+    const fileId = getCurrentFileId();
+    const fileTree = window.fileTree || { files: [] };
+    const file = fileTree.files ? fileTree.files.find(f => f.id === fileId) : null;
+    if (file) {
+        loadFile(fileId).then(() => {
+            updatePreview(currentInputs);
+        });
+    }
 }
 
 // Get currentFileId from fileManager
@@ -294,7 +457,11 @@ function updateCurrentFileId() {
 window.renderSinglePageForm = renderSinglePageForm;
 window.renderBookForm = renderBookForm;
 window.navigatePage = navigatePage;
+window.jumpToPage = jumpToPage;
 window.updateInput = updateInput;
+window.handleInputChange = handleInputChange;
+window.handleInputKeydown = handleInputKeydown;
+window.autoMoveToNextEmptyInput = autoMoveToNextEmptyInput;
 window.addNewInput = addNewInput;
 window.removeInput = removeInput;
 window.renameInput = renameInput;

@@ -34,9 +34,15 @@
             </nav>
         </div>
         <div class="flex items-center gap-4">
-            <div id="book-representor" class="hidden px-4 py-2 bg-gray-700 rounded-lg">
+            <div id="book-representor" class="hidden px-4 py-2 bg-gray-700 rounded-lg flex items-center gap-3">
                 <span class="text-sm font-semibold">Book: <span id="current-book-name">-</span></span>
+                <button id="auto-slide-btn" onclick="toggleAutoSlide()" class="px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-xs" title="Toggle Auto-Slide">
+                    <i class="fas fa-play"></i>
+                </button>
             </div>
+            <button onclick="toggleTheme()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition" title="Toggle Theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
             <button id="logout-btn" onclick="handleLogout()" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">Logout</button>
             <button id="login-btn" onclick="router('auth'); return false;" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition">Login</button>
         </div>
@@ -207,6 +213,9 @@
                     <button onclick="createFile()" class="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 rounded text-sm font-semibold mb-2">
                         <i class="fas fa-plus mr-2"></i>New File
                     </button>
+                    <button onclick="showBookMetadataEditor(window.currentWorkId ? window.currentWorkId() : currentWorkId)" class="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-semibold">
+                        <i class="fas fa-cog mr-2"></i>Book Metadata
+                    </button>
                 </div>
                 <div id="file-tree" class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                     <!-- File tree will be rendered here -->
@@ -218,27 +227,77 @@
                 <!-- Editor Toolbar -->
                 <div id="editor-toolbar" class="bg-gray-800 border-b border-gray-700 p-4">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <button onclick="formatText('bold')" class="toolbar-btn" title="Bold"><i class="fas fa-bold"></i></button>
-                        <button onclick="formatText('italic')" class="toolbar-btn" title="Italic"><i class="fas fa-italic"></i></button>
-                        <button onclick="formatText('underline')" class="toolbar-btn" title="Underline"><i class="fas fa-underline"></i></button>
+                        <!-- Text Formatting -->
+                        <button onclick="formatText('bold')" class="toolbar-btn" title="Bold (Ctrl+B)"><i class="fas fa-bold"></i></button>
+                        <button onclick="formatText('italic')" class="toolbar-btn" title="Italic (Ctrl+I)"><i class="fas fa-italic"></i></button>
+                        <button onclick="formatText('underline')" class="toolbar-btn" title="Underline (Ctrl+U)"><i class="fas fa-underline"></i></button>
+                        <button onclick="formatText('strikeThrough')" class="toolbar-btn" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
                         <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        
+                        <!-- Alignment -->
                         <button onclick="formatText('justifyLeft')" class="toolbar-btn" title="Align Left"><i class="fas fa-align-left"></i></button>
                         <button onclick="formatText('justifyCenter')" class="toolbar-btn" title="Align Center"><i class="fas fa-align-center"></i></button>
                         <button onclick="formatText('justifyRight')" class="toolbar-btn" title="Align Right"><i class="fas fa-align-right"></i></button>
+                        <button onclick="formatText('justifyFull')" class="toolbar-btn" title="Justify"><i class="fas fa-align-justify"></i></button>
                         <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        
+                        <!-- Lists -->
                         <button onclick="formatText('insertUnorderedList')" class="toolbar-btn" title="Bullet List"><i class="fas fa-list-ul"></i></button>
                         <button onclick="formatText('insertOrderedList')" class="toolbar-btn" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                        <button onclick="formatText('outdent')" class="toolbar-btn" title="Decrease Indent"><i class="fas fa-outdent"></i></button>
+                        <button onclick="formatText('indent')" class="toolbar-btn" title="Increase Indent"><i class="fas fa-indent"></i></button>
                         <div class="w-px h-6 bg-gray-700 mx-1"></div>
-                        <select onchange="formatText('formatBlock', this.value)" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm">
+                        
+                        <!-- Headings -->
+                        <select onchange="formatText('formatBlock', this.value)" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white">
                             <option value="p">Paragraph</option>
                             <option value="h1">Heading 1</option>
                             <option value="h2">Heading 2</option>
                             <option value="h3">Heading 3</option>
+                            <option value="h4">Heading 4</option>
+                            <option value="h5">Heading 5</option>
+                            <option value="h6">Heading 6</option>
                         </select>
-                        <input type="number" id="font-size" min="8" max="72" value="16" onchange="setFontSize(this.value)" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm" placeholder="Size">
+                        
+                        <!-- Font Size -->
+                        <input type="number" id="font-size" min="8" max="72" value="16" onchange="setFontSize(this.value)" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white" placeholder="Size">
+                        
+                        <!-- Font Family -->
+                        <select id="font-family" onchange="setFontFamily(this.value)" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-white">
+                            <option value="Oswald">Oswald</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
                         <div class="w-px h-6 bg-gray-700 mx-1"></div>
-                        <button onclick="formatText('foreColor', prompt('Enter color:', '#000000'))" class="toolbar-btn" title="Text Color"><i class="fas fa-palette"></i></button>
-                        <button onclick="formatText('backColor', prompt('Enter background color:', '#ffffff'))" class="toolbar-btn" title="Background Color"><i class="fas fa-fill"></i></button>
+                        
+                        <!-- Colors -->
+                        <div class="relative">
+                            <button onclick="showColorPicker('foreColor')" class="toolbar-btn" title="Text Color"><i class="fas fa-palette"></i></button>
+                            <input type="color" id="text-color-picker" onchange="formatText('foreColor', this.value)" class="absolute opacity-0 w-0 h-0">
+                        </div>
+                        <div class="relative">
+                            <button onclick="showColorPicker('backColor')" class="toolbar-btn" title="Background Color"><i class="fas fa-fill"></i></button>
+                            <input type="color" id="bg-color-picker" onchange="formatText('backColor', this.value)" class="absolute opacity-0 w-0 h-0">
+                        </div>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        
+                        <!-- Insert -->
+                        <button onclick="insertLink()" class="toolbar-btn" title="Insert Link"><i class="fas fa-link"></i></button>
+                        <button onclick="insertImage()" class="toolbar-btn" title="Insert Image"><i class="fas fa-image"></i></button>
+                        <button onclick="insertTable()" class="toolbar-btn" title="Insert Table"><i class="fas fa-table"></i></button>
+                        <button onclick="insertHorizontalRule()" class="toolbar-btn" title="Insert Horizontal Line"><i class="fas fa-minus"></i></button>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        
+                        <!-- Undo/Redo -->
+                        <button onclick="formatText('undo')" class="toolbar-btn" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+                        <button onclick="formatText('redo')" class="toolbar-btn" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+                        <div class="w-px h-6 bg-gray-700 mx-1"></div>
+                        
+                        <!-- Clear Formatting -->
+                        <button onclick="formatText('removeFormat')" class="toolbar-btn" title="Clear Formatting"><i class="fas fa-eraser"></i></button>
                     </div>
                 </div>
 

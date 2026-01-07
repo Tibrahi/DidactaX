@@ -199,32 +199,111 @@ async function downloadWork() {
         return;
     }
     
+    // Load book metadata if available
+    if (work.type === 'book' && window.loadBookMetadata) {
+        await window.loadBookMetadata(currentWorkId);
+    }
+    
     // Get all files and content
     const files = await db.files.where('workId').equals(currentWorkId).toArray();
     let fullContent = '';
     
+    // Add book metadata header if it's a book
+    if (work.type === 'book' && window.bookMetadata) {
+        const meta = window.bookMetadata;
+        if (meta.identity?.bookTitle) {
+            fullContent += `<h1>${meta.identity.bookTitle}</h1>`;
+        }
+        if (meta.identity?.subtitle) {
+            fullContent += `<h2>${meta.identity.subtitle}</h2>`;
+        }
+        if (meta.author?.authorNames) {
+            fullContent += `<p><strong>Author:</strong> ${meta.author.authorNames}</p>`;
+        }
+        if (meta.author?.publisherName) {
+            fullContent += `<p><strong>Publisher:</strong> ${meta.author.publisherName}</p>`;
+        }
+        if (meta.author?.publicationYear) {
+            fullContent += `<p><strong>Year:</strong> ${meta.author.publicationYear}</p>`;
+        }
+        fullContent += '<hr>';
+    }
+    
+    // Sort files by order or name
+    files.sort((a, b) => (a.order || 0) - (b.order || 0) || a.name.localeCompare(b.name));
+    
     for (const file of files) {
         const inputs = await db.inputs.where('fileId').equals(file.id).toArray();
-        fullContent += `<h2>${file.name}</h2>`;
-        inputs.forEach(input => {
-            if (input.value) {
-                fullContent += `<h3>${input.label}</h3><p>${input.value}</p>`;
-            }
-        });
+        
+        if (work.type === 'book') {
+            // Group by page for books
+            const pages = {};
+            inputs.forEach(input => {
+                const page = input.pageNum || 1;
+                if (!pages[page]) pages[page] = [];
+                pages[page].push(input);
+            });
+            
+            const pageNumbers = Object.keys(pages).map(Number).sort((a, b) => a - b);
+            pageNumbers.forEach(pageNum => {
+                fullContent += `<div class="page-break"><h2>Page ${pageNum}</h2>`;
+                pages[pageNum].forEach(input => {
+                    if (input.value) {
+                        const cleanValue = input.value.replace(/<script[^>]*>.*?<\/script>/gi, '');
+                        fullContent += `<h3>${input.label}</h3><div>${cleanValue}</div>`;
+                    }
+                });
+                fullContent += '</div>';
+            });
+        } else {
+            // Single page format
+            fullContent += `<h2>${file.name}</h2>`;
+            inputs.sort((a, b) => a.order - b.order).forEach(input => {
+                if (input.value) {
+                    const cleanValue = input.value.replace(/<script[^>]*>.*?<\/script>/gi, '');
+                    fullContent += `<h3>${input.label}</h3><div>${cleanValue}</div>`;
+                }
+            });
+        }
     }
     
     // Calculate page count
     const wordCount = fullContent.replace(/<[^>]*>/g, '').split(/\s+/).length;
     const pageCount = Math.ceil(wordCount / 250);
     
-    // Prompt for format
-    const format = confirm('Download as PDF? (OK for PDF, Cancel for DOCX)') ? 'pdf' : 'docx';
+    // Show format selection popup
+    const popup = document.getElementById('custom-popup');
+    const content = document.getElementById('popup-content');
     
-    if (format === 'pdf') {
-        downloadAsPDF(fullContent, work.title);
-    } else {
-        downloadAsDOCX(fullContent, work.title);
-    }
+    content.innerHTML = `
+        <h3 class="text-xl font-bold mb-4">Download Options</h3>
+        <div class="mb-4">
+            <p class="text-gray-400 mb-2">Estimated pages: ${pageCount}</p>
+            <p class="text-sm text-gray-500">Select download format:</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="confirmDownload('pdf')" class="flex-1 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold">
+                <i class="fas fa-file-pdf mr-2"></i>PDF
+            </button>
+            <button onclick="confirmDownload('docx')" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold">
+                <i class="fas fa-file-word mr-2"></i>DOCX
+            </button>
+            <button onclick="closePopup()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                Cancel
+            </button>
+        </div>
+    `;
+    
+    popup.classList.remove('hidden');
+    
+    window.confirmDownload = (format) => {
+        closePopup();
+        if (format === 'pdf') {
+            downloadAsPDF(fullContent, work.title);
+        } else {
+            downloadAsDOCX(fullContent, work.title);
+        }
+    };
 }
 
 // Download as PDF (simplified - would need proper PDF library in production)
@@ -272,9 +351,108 @@ function downloadAsDOCX(content, filename) {
     showSuccess('DOCX download initiated');
 }
 
+// Set font family
+function setFontFamily(fontFamily) {
+    formatText('fontName', fontFamily);
+    updateCounters();
+}
+
+// Show color picker
+function showColorPicker(type) {
+    const pickerId = type === 'foreColor' ? 'text-color-picker' : 'bg-color-picker';
+    const picker = document.getElementById(pickerId);
+    if (picker) {
+        picker.click();
+    }
+}
+
+// Insert link
+function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) {
+        const text = prompt('Enter link text:', url);
+        formatText('createLink', url);
+        updateCounters();
+    }
+}
+
+// Insert image
+function insertImage() {
+    const url = prompt('Enter image URL:');
+    if (url) {
+        formatText('insertImage', url);
+        updateCounters();
+    }
+}
+
+// Insert table
+function insertTable() {
+    const rows = parseInt(prompt('Number of rows:', '3')) || 3;
+    const cols = parseInt(prompt('Number of columns:', '3')) || 3;
+    
+    let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%;">';
+    for (let i = 0; i < rows; i++) {
+        tableHTML += '<tr>';
+        for (let j = 0; j < cols; j++) {
+            tableHTML += '<td style="padding: 8px;">&nbsp;</td>';
+        }
+        tableHTML += '</tr>';
+    }
+    tableHTML += '</table>';
+    
+    const editor = document.getElementById('editor');
+    if (editor) {
+        editor.focus();
+        document.execCommand('insertHTML', false, tableHTML);
+        updateCounters();
+    }
+}
+
+// Insert horizontal rule
+function insertHorizontalRule() {
+    formatText('insertHorizontalRule');
+    updateCounters();
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+        switch(e.key.toLowerCase()) {
+            case 'b':
+                e.preventDefault();
+                formatText('bold');
+                break;
+            case 'i':
+                e.preventDefault();
+                formatText('italic');
+                break;
+            case 'u':
+                e.preventDefault();
+                formatText('underline');
+                break;
+            case 'z':
+                if (!e.shiftKey) {
+                    e.preventDefault();
+                    formatText('undo');
+                }
+                break;
+            case 'y':
+                e.preventDefault();
+                formatText('redo');
+                break;
+        }
+    }
+});
+
 // Export
 window.formatText = formatText;
 window.setFontSize = setFontSize;
+window.setFontFamily = setFontFamily;
+window.showColorPicker = showColorPicker;
+window.insertLink = insertLink;
+window.insertImage = insertImage;
+window.insertTable = insertTable;
+window.insertHorizontalRule = insertHorizontalRule;
 window.initEditor = initEditor;
 window.updateCounters = updateCounters;
 window.saveCurrentWork = saveCurrentWork;
