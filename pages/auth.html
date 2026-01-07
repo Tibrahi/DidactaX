@@ -3,494 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zenith Publisher | Professional Book Production</title>
+    <title>Rwanda Ed-Tech Editor</title>
     
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
-    
-    <!-- Core Libraries -->
-    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Oswald', 'sans-serif'],
+                    },
+                    colors: {
+                        night: {
+                            900: '#020617', // Main bg
+                            800: '#0f172a', // Panels
+                            700: '#1e293b', // Inputs
+                            600: '#334155', // Borders
+                            accent: '#38bdf8' // Cyan accent
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <style>
-        :root {
-            --night-bg: #0d1117;
-            --night-sidebar: #161b22;
-            --night-border: #30363d;
-            --accent: #58a6ff;
-            --text-main: #c9d1d9;
+        body { font-family: 'Oswald', sans-serif; overflow: hidden; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        /* Custom Scrollbar for Editor */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .rich-editor:focus { outline: 2px solid #38bdf8; }
+        [contenteditable]:empty:before {
+            content: attr(placeholder);
+            color: #64748b;
+            display: block; 
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--night-bg);
-            color: var(--text-main);
-            overflow: hidden;
-        }
-
-        .oswald { font-family: 'Oswald', sans-serif; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--night-bg); }
-        ::-webkit-scrollbar-thumb { background: var(--night-border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-        .editor-panel {
-            height: calc(100vh - 100px);
-        }
-
-        .file-item:hover .action-btns { opacity: 1; }
-        .action-btns { opacity: 0; transition: opacity 0.2s; }
-
-        .book-page {
-            aspect-ratio: 1 / 1.414; /* A4 Ratio */
-            background: #ffffff;
-            color: #000000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            padding: 40px;
-            overflow-y: auto;
-        }
-
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.3s ease-out; }
     </style>
 </head>
-<body class="flex flex-col h-screen">
+<body class="bg-night-900 text-gray-200 h-screen flex flex-col transition-colors duration-300">
 
-    <!-- Header -->
-    <header class="h-14 border-b border-[#30363d] bg-[#161b22] flex items-center justify-between px-6 z-50">
+    <header class="h-14 bg-night-800 border-b border-night-600 flex items-center justify-between px-4 z-20">
         <div class="flex items-center gap-4">
-            <h1 class="oswald text-xl font-bold tracking-wider text-white">ZENITH <span class="text-blue-400">PUBLISHER</span></h1>
-            <nav class="ml-8 flex gap-6 text-sm font-medium">
-                <a href="#" onclick="showView('home')" class="hover:text-blue-400 transition">Home</a>
-                <a href="#" onclick="showView('dashboard')" class="hover:text-blue-400 transition">Dashboard</a>
-                <a href="#" onclick="showView('pricing')" class="hover:text-blue-400 transition text-yellow-500">Upgrade (Pay-Per-Service)</a>
+            <div class="text-night-accent text-xl font-bold tracking-wider"><i class="fa-solid fa-book-open"></i> EDIT.RW</div>
+            <nav class="hidden md:flex gap-4 text-sm text-gray-400">
+                <a href="#" onclick="app.nav('home')" class="hover:text-white transition">Home</a>
+                <a href="#" onclick="app.nav('dashboard')" class="hover:text-white transition">Dashboard</a>
+                <a href="#" class="hover:text-white transition text-yellow-400"><i class="fa-solid fa-fire"></i> Streak: <span id="streak-count">3</span></a>
             </nav>
         </div>
-        <div class="flex items-center gap-4">
-            <div id="streak-counter" class="text-xs bg-orange-900/30 text-orange-400 px-3 py-1 rounded-full border border-orange-500/30">
-                🔥 5 Day Streak
+        
+        <div class="flex items-center gap-3">
+            <button onclick="app.toggleTheme()" class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-moon"></i></button>
+            <div class="relative group">
+                <button class="flex items-center gap-2 bg-night-700 px-3 py-1 rounded border border-night-600">
+                    <div class="w-6 h-6 rounded-full bg-night-accent"></div>
+                    <span class="text-sm">User</span>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-night-800 border border-night-600 rounded shadow-xl hidden group-hover:block">
+                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm">Profile</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm">Settings</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-night-700 text-sm text-red-400">Logout</a>
+                </div>
             </div>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-1.5 rounded font-bold transition">LOG OUT</button>
+            <button onclick="app.paymentModal()" class="bg-night-accent text-night-900 px-4 py-1 rounded font-bold text-sm hover:bg-white transition">
+                Download PDF
+            </button>
         </div>
     </header>
 
-    <!-- Main System Layout -->
-    <main id="app-container" class="flex flex-1 overflow-hidden">
+    <div class="flex-1 flex overflow-hidden">
         
-        <!-- Sidebar: File Navigator (Left) -->
-        <aside class="w-64 border-r border-[#30363d] bg-[#161b22] flex flex-col">
-            <div class="p-4 border-b border-[#30363d] flex justify-between items-center">
-                <span class="text-xs font-bold uppercase tracking-widest text-gray-500">Explorer</span>
-                <div class="flex gap-2">
-                    <button onclick="createNewFolder()" title="New Folder"><i data-lucide="folder-plus" class="w-4 h-4 hover:text-white"></i></button>
-                    <button onclick="createNewFilePrompt()" title="New File"><i data-lucide="file-plus" class="w-4 h-4 hover:text-white"></i></button>
+        <aside class="w-64 bg-night-900 border-r border-night-600 flex flex-col">
+            <div class="p-3 text-xs font-bold text-gray-500 uppercase tracking-widest flex justify-between">
+                <span>Explorer</span>
+                <button onclick="fileManager.createFolderPrompt()" class="hover:text-white" title="New Book/Folder"><i class="fa-solid fa-folder-plus"></i></button>
+            </div>
+            <div id="file-tree" class="flex-1 overflow-y-auto p-2 space-y-1">
                 </div>
-            </div>
-            <div id="file-tree" class="flex-1 overflow-y-auto p-2 text-sm">
-                <!-- Dynamic File Tree -->
-            </div>
         </aside>
 
-        <!-- Editor View (Middle) -->
-        <section class="flex-1 flex flex-col bg-[#0d1117]">
-            <div id="editor-tabs" class="h-10 border-b border-[#30363d] flex items-center bg-[#161b22] px-2 gap-1">
-                <!-- Active File Tabs -->
+        <main class="flex-1 bg-night-800 flex flex-col min-w-0 relative">
+            
+            <div class="h-10 bg-night-800 border-b border-night-600 flex items-center px-3 gap-2 overflow-x-auto">
+                <button onclick="editor.format('bold')" class="w-8 h-8 rounded hover:bg-night-700" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button onclick="editor.format('italic')" class="w-8 h-8 rounded hover:bg-night-700" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button onclick="editor.format('underline')" class="w-8 h-8 rounded hover:bg-night-700" title="Underline"><i class="fa-solid fa-underline"></i></button>
+                <div class="w-px h-6 bg-night-600 mx-1"></div>
+                <button onclick="editor.insertDiagram()" class="px-2 h-8 rounded hover:bg-night-700 text-xs flex items-center gap-1"><i class="fa-solid fa-project-diagram"></i> Diagram</button>
+                <button onclick="editor.addCustomInput()" class="px-2 h-8 rounded hover:bg-night-700 text-xs flex items-center gap-1 ml-auto text-green-400"><i class="fa-solid fa-plus"></i> Add Section</button>
+            </div>
+
+            <div id="editor-canvas" class="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full pb-20">
+                <div class="text-center text-gray-500 mt-20">
+                    <i class="fa-solid fa-book text-4xl mb-4"></i>
+                    <p>Select a file to start editing or create a new one.</p>
+                </div>
             </div>
             
-            <div id="editor-main" class="flex-1 flex flex-col p-8 overflow-y-auto">
-                <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-gray-600">
-                    <i data-lucide="layers" class="w-16 h-16 mb-4 opacity-20"></i>
-                    <p class="oswald text-lg">Select a file to start writing</p>
-                    <p class="text-xs">Or create a new book project from the dashboard</p>
-                </div>
-
-                <!-- Chapter Engine Inputs (Dynamic) -->
-                <div id="input-fields-container" class="max-w-4xl mx-auto w-full hidden space-y-8 animate-fade">
-                    <div class="flex justify-between items-center border-b border-[#30363d] pb-4">
-                        <h2 id="active-filename" class="oswald text-2xl text-white">Untitled Chapter</h2>
-                        <div class="flex gap-2">
-                            <button onclick="saveCurrentFile()" class="bg-green-600/20 text-green-400 border border-green-500/30 px-3 py-1 text-xs rounded hover:bg-green-600/40">Save</button>
-                            <button onclick="addCustomInput()" class="bg-gray-800 text-gray-300 px-3 py-1 text-xs rounded hover:bg-gray-700">+ Add Block</button>
-                        </div>
-                    </div>
-                    
-                    <div id="dynamic-inputs" class="space-y-6">
-                        <!-- Inputs injected here -->
-                    </div>
-                </div>
+            <div id="toast" class="absolute bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg transform translate-y-20 transition-transform">
+                <i class="fa-solid fa-check-circle"></i> Saved Successfully
             </div>
-        </section>
+        </main>
 
-        <!-- Reviewer Panel (Right) -->
-        <aside class="w-96 border-l border-[#30363d] bg-[#161b22] flex flex-col">
-            <div class="p-4 border-b border-[#30363d] flex justify-between items-center">
-                <span class="text-xs font-bold uppercase tracking-widest text-gray-500">Live Review</span>
-                <div class="flex gap-2">
-                    <button onclick="togglePagination()" class="text-xs text-blue-400 hover:underline">Book View</button>
-                    <button onclick="handleDownload()" class="bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 text-[10px] rounded uppercase font-bold">Export</button>
-                </div>
+        <aside class="w-1/3 bg-white text-black border-l border-night-600 flex flex-col">
+            <div class="h-10 bg-gray-100 border-b border-gray-300 flex items-center justify-between px-3">
+                <span class="text-xs font-bold text-gray-500">LIVE PREVIEW</span>
+                <span class="text-xs bg-gray-200 px-2 py-0.5 rounded">A4</span>
             </div>
-            <div id="review-container" class="flex-1 overflow-y-auto p-6 bg-[#090c10]">
-                <div id="pagination-controls" class="hidden flex justify-between mb-4">
-                    <button onclick="prevPage()" class="text-xs px-2 py-1 bg-gray-800 rounded">← Prev</button>
-                    <span id="page-indicator" class="text-xs font-bold">Page 1 / 1</span>
-                    <button onclick="nextPage()" class="text-xs px-2 py-1 bg-gray-800 rounded">Next →</button>
-                </div>
-                <div id="preview-render" class="animate-fade">
-                    <!-- Real-time HTML Preview -->
-                    <div class="text-center text-gray-700 mt-20 italic text-sm">Preview will appear here...</div>
-                </div>
+            <div id="preview-frame" class="flex-1 overflow-y-auto p-8 shadow-inner bg-gray-50">
+                <h1 class="text-3xl font-bold mb-4 border-b-2 border-black pb-2">Topic Name</h1>
+                <p class="text-gray-600 italic mb-4">Select an input to see changes here...</p>
             </div>
         </aside>
+    </div>
 
-    </main>
-
-    <!-- Footer Stats -->
-    <footer class="h-8 border-t border-[#30363d] bg-[#161b22] flex items-center justify-between px-4 text-[10px] uppercase tracking-tighter text-gray-500 z-50">
+    <footer class="h-6 bg-night-accent text-night-900 text-xs flex items-center justify-between px-4 font-bold">
         <div class="flex gap-4">
-            <span id="stat-words">WORDS: 0</span>
-            <span id="stat-chars">CHARS: 0</span>
-            <span id="stat-paragraphs">PARAGRAPHS: 0</span>
+            <span><i class="fa-solid fa-file-word"></i> Words: <span id="word-count">0</span></span>
+            <span><i class="fa-solid fa-paragraph"></i> Sections: <span id="section-count">0</span></span>
         </div>
-        <div class="flex gap-4">
-            <span id="stat-pages" class="text-blue-400 font-bold">PAPER: 1 SHEET</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> DB SYNCED</span>
-            <span class="oswald">UTF-8</span>
-        </div>
+        <div id="autosave-status">Synced <i class="fa-solid fa-cloud"></i></div>
     </footer>
 
-    <!-- Modals -->
-    <div id="modal-overlay" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
-        <div id="modal-content" class="bg-[#161b22] border border-[#30363d] p-6 rounded-lg w-full max-w-md animate-fade">
-            <!-- Dynamic Modal Content -->
+    <div id="pay-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-night-800 border border-night-600 p-8 rounded-lg max-w-md w-full shadow-2xl">
+            <h2 class="text-2xl text-white mb-2">Unlock Download</h2>
+            <p class="text-gray-400 mb-6 text-sm">Your document has <span class="text-night-accent">5 pages</span>. Total cost:</p>
+            
+            <div class="bg-night-900 p-4 rounded mb-6 border border-night-600">
+                <div class="flex justify-between text-xl font-bold text-white">
+                    <span>Total:</span>
+                    <span id="price-tag">500 RWF</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button class="bg-yellow-400 text-black py-3 rounded font-bold hover:bg-yellow-300">MTN MoMo</button>
+                <button class="bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-500">BK Digital</button>
+            </div>
+
+            <button onclick="document.getElementById('pay-modal').classList.add('hidden')" class="w-full text-gray-400 text-sm hover:text-white">Cancel</button>
         </div>
     </div>
 
     <script>
-        // --- DATABASE SETUP (DEXIE) ---
-        const db = new Dexie("ZenithEditorDB");
+        // --- 1. INDEXEDDB SETUP (DEXIE) ---
+        const db = new Dexie("RwandaEdTechDB");
         db.version(1).stores({
-            folders: '++id, name, parentId',
-            files: '++id, name, folderId, extension, content',
-            settings: 'key, value'
+            folders: '++id, name, type, created', // Books
+            files: '++id, folderId, title, type, content, order' // Pages/Chapters
         });
 
-        let activeFileId = null;
-        let isBookView = false;
-        let currentPageIndex = 0;
-        let dictionary = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"]; // Mock for autocorrect
-
-        // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            lucide.createIcons();
-            await refreshFileTree();
-            updateStats();
-        });
-
-        // --- FILE SYSTEM LOGIC ---
-        async function refreshFileTree() {
-            const tree = document.getElementById('file-tree');
-            tree.innerHTML = '';
-            
-            const folders = await db.folders.toArray();
-            const rootFiles = await db.files.filter(f => !f.folderId).toArray();
-
-            folders.forEach(folder => {
-                const fEl = createFolderUI(folder);
-                tree.appendChild(fEl);
-            });
-
-            rootFiles.forEach(file => {
-                const fEl = createFileUI(file);
-                tree.appendChild(fEl);
-            });
-            
-            lucide.createIcons();
-        }
-
-        function createFolderUI(folder) {
-            const div = document.createElement('div');
-            div.className = 'mb-1';
-            div.innerHTML = `
-                <div class="flex items-center gap-2 p-1 hover:bg-gray-800 rounded cursor-pointer group">
-                    <i data-lucide="chevron-right" class="w-3 h-3 text-gray-500"></i>
-                    <i data-lucide="folder" class="w-4 h-4 text-blue-400"></i>
-                    <span class="flex-1 oswald">${folder.name}</span>
-                    <div class="action-btns flex gap-1">
-                        <button onclick="deleteFolder(${folder.id})" class="text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                    </div>
-                </div>
-                <div id="folder-content-${folder.id}" class="ml-4 border-l border-gray-800"></div>
-            `;
-            loadFolderContents(folder.id);
-            return div;
-        }
-
-        async function loadFolderContents(folderId) {
-            const files = await db.files.where('folderId').equals(folderId).toArray();
-            const container = document.getElementById(`folder-content-${folderId}`);
-            files.forEach(file => {
-                container.appendChild(createFileUI(file));
-            });
-        }
-
-        function createFileUI(file) {
-            const div = document.createElement('div');
-            div.className = `flex items-center gap-2 p-1 pl-4 hover:bg-gray-800 rounded cursor-pointer group ${activeFileId === file.id ? 'bg-blue-900/30' : ''}`;
-            div.onclick = () => openFile(file.id);
-            div.innerHTML = `
-                <i data-lucide="file-text" class="w-3 h-3 text-gray-400"></i>
-                <span class="flex-1 truncate">${file.name}${file.extension}</span>
-                <div class="action-btns flex gap-1">
-                    <button onclick="event.stopPropagation(); deleteFile(${file.id})" class="text-gray-500 hover:text-red-400"><i data-lucide="x" class="w-3 h-3"></i></button>
-                </div>
-            `;
-            return div;
-        }
-
-        async function createNewFilePrompt() {
-            const name = prompt("File Name:");
-            if(!name) return;
-            const id = await db.files.add({
-                name: name,
-                extension: ".docx",
-                folderId: 0,
-                content: {
-                    title: name,
-                    objective: "",
-                    keywords: "",
-                    concepts: "",
-                    vocabulary: "",
-                    summary: "",
-                    practice: ""
-                }
-            });
-            await refreshFileTree();
-            openFile(id);
-        }
-
-        async function createNewFolder() {
-            const name = prompt("Project/Folder Name:");
-            if(!name) return;
-            await db.folders.add({ name: name, parentId: 0 });
-            await refreshFileTree();
-        }
-
-        // --- EDITOR ENGINE ---
-        async function openFile(id) {
-            activeFileId = id;
-            const file = await db.files.get(id);
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('input-fields-container').classList.remove('hidden');
-            document.getElementById('active-filename').innerText = file.name + file.extension;
-            
-            renderEditorInputs(file.content);
-            updatePreview(file.content);
-            refreshFileTree();
-        }
-
-        function renderEditorInputs(content) {
-            const container = document.getElementById('dynamic-inputs');
-            container.innerHTML = '';
-
-            const schema = [
-                { key: 'title', label: '1. TITLE / TOPIC', placeholder: 'Enter chapter title...' },
-                { key: 'objective', label: '2. OBJECTIVE', placeholder: 'What should students learn?' },
-                { key: 'keywords', label: '3. KEYWORDS & FORMULAS', placeholder: 'Term: Definition' },
-                { key: 'concepts', label: '4. KEY CONCEPTS', placeholder: 'Main ideas and principles...' },
-                { key: 'vocabulary', label: '5. VOCABULARY', placeholder: 'New words...' },
-                { key: 'summary', label: '8. SUMMARY', placeholder: '3-5 lines of main takeaways...' },
-                { key: 'practice', label: '9. PRACTICE / ACTION', placeholder: 'Exercises and tasks...' }
-            ];
-
-            schema.forEach(field => {
-                const val = content[field.key] || "";
-                const div = document.createElement('div');
-                div.className = "space-y-2";
-                div.innerHTML = `
-                    <label class="text-[10px] font-bold text-blue-400 oswald tracking-widest uppercase">${field.label}</label>
-                    <textarea 
-                        oninput="handleInput(this, '${field.key}')" 
-                        onkeydown="checkAutocorrect(event, this)"
-                        placeholder="${field.placeholder}"
-                        class="w-full bg-[#161b22] border border-[#30363d] rounded p-3 text-sm text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition outline-none resize-none min-h-[80px]"
-                    >${val}</textarea>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        async function handleInput(el, key) {
-            const file = await db.files.get(activeFileId);
-            file.content[key] = el.value;
-            await db.files.update(activeFileId, { content: file.content });
-            updatePreview(file.content);
-            updateStats();
-        }
-
-        // --- AUTOCORRECT LOGIC ---
-        function checkAutocorrect(e, el) {
-            if (e.keyCode === 32) { // Spacebar
-                const text = el.value;
-                const lastWord = text.split(/\s+/).pop();
-                
-                // Example: replace "btw" with "by the way"
-                const shortcuts = { "btw": "by the way", "doc": "document", "hw": "homework" };
-                
-                if (shortcuts[lastWord.toLowerCase()]) {
-                    e.preventDefault();
-                    const newVal = text.substring(0, text.lastIndexOf(lastWord)) + shortcuts[lastWord.toLowerCase()] + " ";
-                    el.value = newVal;
-                }
+        // --- 2. STATE & CONFIG ---
+        const state = {
+            currentFolderId: null,
+            currentFileId: null,
+            structure: {
+                "single_page": [
+                    { id: "title", label: "1. Title & Topic", type: "text", placeholder: "Enter Topic Name" },
+                    { id: "objective", label: "2. Objective", type: "textarea", placeholder: "What is this lesson about?" },
+                    { id: "keywords", label: "3. Keywords", type: "text", placeholder: "Term 1, Term 2, Formula..." },
+                    { id: "concepts", label: "4. Key Concepts", type: "textarea", placeholder: "Main ideas and rules..." },
+                    { id: "vocab", label: "5. Vocabulary", type: "text", placeholder: "New words..." },
+                    { id: "examples", label: "6. Examples", type: "textarea", placeholder: "Real world usage..." },
+                    { id: "questions", label: "7. Questions", type: "textarea", placeholder: "Things you don't understand..." },
+                    { id: "summary", label: "8. Summary", type: "textarea", placeholder: "Lesson in your own words (3-5 lines)" }
+                ],
+                "book_chapter": [
+                    { id: "chapter_title", label: "Chapter Title", type: "text", placeholder: "Chapter Name" },
+                    { id: "learning_obj", label: "Learning Objectives", type: "textarea", placeholder: "Bullets..." },
+                    { id: "intro", label: "Introduction", type: "textarea", placeholder: "Start here..." },
+                    { id: "core_content", label: "Core Explanation", type: "rich", placeholder: "Main content..." }
+                ]
             }
-        }
+        };
 
-        // --- REVIEWER & PREVIEW ---
-        function updatePreview(content) {
-            const render = document.getElementById('preview-render');
-            if (isBookView) {
-                render.innerHTML = `
-                    <div class="book-page animate-fade">
-                        <h1 class="text-3xl font-bold mb-4 border-b-2 border-black pb-2">${content.title || 'Untitled'}</h1>
-                        <h3 class="font-bold text-sm uppercase text-gray-600">Objective</h3>
-                        <p class="mb-4 text-sm">${content.objective || '...'}</p>
-                        <h3 class="font-bold text-sm uppercase text-gray-600">Key Concepts</h3>
-                        <div class="bg-gray-100 p-4 rounded mb-4 text-sm whitespace-pre-line">${content.concepts || '...'}</div>
-                        <h3 class="font-bold text-sm uppercase text-gray-600">Summary</h3>
-                        <p class="italic text-sm">${content.summary || '...'}</p>
-                    </div>
-                `;
-            } else {
-                render.innerHTML = `
-                    <div class="text-white space-y-4">
-                        <div class="border-l-2 border-blue-500 pl-4">
-                            <h3 class="text-blue-400 text-xs font-bold uppercase">Topic</h3>
-                            <p class="text-lg oswald">${content.title || 'Untitled'}</p>
-                        </div>
-                        <div>
-                            <h3 class="text-gray-500 text-[10px] font-bold uppercase">Objective</h3>
-                            <p class="text-sm text-gray-300">${content.objective || 'No objective set.'}</p>
-                        </div>
-                        <div class="bg-gray-800/50 p-3 rounded">
-                            <h3 class="text-gray-500 text-[10px] font-bold uppercase">Summary</h3>
-                            <p class="text-xs text-gray-400 italic">${content.summary || 'Write a summary to see it here.'}</p>
-                        </div>
-                    </div>
-                `;
+        // --- 3. UI CONTROLLER ---
+        const app = {
+            init: async () => {
+                await fileManager.loadExplorer();
+            },
+
+            nav: (page) => {
+                alert(`Navigating to ${page}... (Placeholder for dashboard logic)`);
+            },
+
+            toggleTheme: () => {
+                document.documentElement.classList.toggle('dark');
+            },
+
+            showToast: () => {
+                const t = document.getElementById('toast');
+                t.style.transform = "translateY(0)";
+                setTimeout(() => t.style.transform = "translateY(5rem)", 2000);
+            },
+
+            paymentModal: () => {
+                // Mock Logic for Pricing
+                const pages = Math.floor(Math.random() * 10) + 1; // Simulated count
+                const price = pages > 250 ? (pages * 2) + 1000 : 500;
+                
+                document.getElementById('price-tag').innerText = `${price} RWF`;
+                document.getElementById('pay-modal').classList.remove('hidden');
+                document.getElementById('pay-modal').style.display = 'flex';
             }
-        }
+        };
 
-        function togglePagination() {
-            isBookView = !isBookView;
-            document.getElementById('pagination-controls').classList.toggle('hidden', !isBookView);
-            const active = activeFileId;
-            if(active) openFile(active);
-        }
+        // --- 4. FILE MANAGER ---
+        const fileManager = {
+            loadExplorer: async () => {
+                const tree = document.getElementById('file-tree');
+                tree.innerHTML = "";
+                const folders = await db.folders.toArray();
 
-        // --- PAYMENT & DOWNLOAD SIMULATION ---
-        function handleDownload() {
-            const pageCount = parseInt(document.getElementById('stat-pages').innerText.split(' ')[0]);
-            const price = pageCount > 250 ? 1000 : 500;
-            
-            const overlay = document.getElementById('modal-overlay');
-            const content = document.getElementById('modal-content');
-            
-            overlay.classList.remove('hidden');
-            content.innerHTML = `
-                <div class="text-center">
-                    <h2 class="oswald text-2xl text-white mb-2">Export Service</h2>
-                    <p class="text-gray-400 text-sm mb-6">Your document has ${pageCount} pages. Total cost for PDF/DOCX generation is <b>${price} RWF</b>.</p>
+                for (const folder of folders) {
+                    const div = document.createElement('div');
+                    div.className = "mb-2";
                     
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                        <button onclick="pay('MTN')" class="border border-[#30363d] p-3 rounded hover:bg-yellow-600/20 group">
-                            <div class="text-xs font-bold text-yellow-500 mb-1">MTN</div>
-                            <div class="text-[8px] text-gray-500">Momo</div>
-                        </button>
-                        <button onclick="pay('AIRTEL')" class="border border-[#30363d] p-3 rounded hover:bg-red-600/20 group">
-                            <div class="text-xs font-bold text-red-500 mb-1">AIRTEL</div>
-                            <div class="text-[8px] text-gray-500">Money</div>
-                        </button>
-                        <button onclick="pay('BK')" class="border border-[#30363d] p-3 rounded hover:bg-blue-600/20 group">
-                            <div class="text-xs font-bold text-blue-500 mb-1">BK</div>
-                            <div class="text-[8px] text-gray-500">E-Bank</div>
-                        </button>
-                    </div>
+                    // Folder Header
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between px-2 py-1 text-sm text-gray-300 hover:bg-night-700 cursor-pointer group" onclick="fileManager.toggleFolder(${folder.id})">
+                            <span class="font-bold"><i class="fa-solid fa-book text-night-accent"></i> ${folder.name}</span>
+                            <div class="hidden group-hover:flex gap-2">
+                                <i class="fa-solid fa-file-circle-plus hover:text-white" onclick="event.stopPropagation(); fileManager.createFilePrompt(${folder.id})"></i>
+                                <i class="fa-solid fa-trash hover:text-red-400" onclick="event.stopPropagation(); fileManager.deleteFolder(${folder.id})"></i>
+                            </div>
+                        </div>
+                        <div id="folder-content-${folder.id}" class="ml-4 border-l border-night-600 hidden"></div>
+                    `;
+                    tree.appendChild(div);
+                    await fileManager.loadFiles(folder.id);
+                }
+            },
 
-                    <button onclick="closeModal()" class="text-xs text-gray-600 hover:text-white uppercase tracking-widest">Cancel</button>
-                </div>
-            `;
-        }
+            loadFiles: async (folderId) => {
+                const container = document.getElementById(`folder-content-${folderId}`);
+                const files = await db.files.where({ folderId: folderId }).sortBy('order');
+                
+                container.innerHTML = "";
+                files.forEach(file => {
+                    const fDiv = document.createElement('div');
+                    fDiv.className = "px-2 py-1 text-sm text-gray-400 hover:text-white hover:bg-night-700 cursor-pointer flex justify-between group";
+                    fDiv.innerHTML = `
+                        <span onclick="editor.load(${file.id})"><i class="fa-regular fa-file-lines"></i> ${file.title || 'Untitled'}</span>
+                         <i class="fa-solid fa-xmark hidden group-hover:block hover:text-red-400" onclick="fileManager.deleteFile(${file.id})"></i>
+                    `;
+                    container.appendChild(fDiv);
+                });
+            },
 
-        function pay(method) {
-            const content = document.getElementById('modal-content');
-            content.innerHTML = `
-                <div class="text-center py-8">
-                    <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p class="oswald text-lg text-white">Initializing ${method} Payment...</p>
-                    <p class="text-xs text-gray-500">Please check your phone for the USSD Push</p>
-                </div>
-            `;
+            toggleFolder: (id) => {
+                const el = document.getElementById(`folder-content-${id}`);
+                el.classList.toggle('hidden');
+            },
+
+            createFolderPrompt: async () => {
+                const name = prompt("Enter Book/Topic Name:");
+                if (!name) return;
+                
+                const type = prompt("Type '1' for Single Page Style, '2' for Book Style") === '2' ? 'book' : 'single';
+                
+                const id = await db.folders.add({ name, type, created: new Date() });
+                
+                // If book, ask for page count to auto-generate
+                if (type === 'book') {
+                    const count = parseInt(prompt("How many chapters/pages to generate?", "5"));
+                    if (count) {
+                        for(let i=1; i<=count; i++) {
+                            await db.files.add({ folderId: id, title: `Chapter ${i}`, type: 'book_chapter', content: {}, order: i });
+                        }
+                    }
+                } else {
+                    await db.files.add({ folderId: id, title: "Lesson Summary", type: 'single_page', content: {}, order: 1 });
+                }
+                
+                fileManager.loadExplorer();
+            },
+
+            createFilePrompt: async (folderId) => {
+                const title = prompt("Page Title:");
+                if(title) {
+                    await db.files.add({ folderId, title, type: 'single_page', content: {}, order: 99 });
+                    fileManager.loadFiles(folderId);
+                    // Ensure folder is open
+                    document.getElementById(`folder-content-${folderId}`).classList.remove('hidden');
+                }
+            },
+
+            deleteFolder: async (id) => {
+                if(confirm("Delete this entire book?")) {
+                    await db.folders.delete(id);
+                    await db.files.where({folderId: id}).delete();
+                    fileManager.loadExplorer();
+                }
+            },
             
-            setTimeout(() => {
-                content.innerHTML = `
-                    <div class="text-center py-4">
-                        <i data-lucide="check-circle-2" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
-                        <h2 class="oswald text-2xl text-white">Payment Successful</h2>
-                        <p class="text-sm text-gray-400 mb-6">License granted for ${activeFileId}. Your download will begin shortly.</p>
-                        <button onclick="closeModal()" class="bg-blue-600 text-white px-6 py-2 rounded text-sm oswald">DOWNLOAD NOW</button>
+            deleteFile: async (id) => {
+                await db.files.delete(id);
+                // Refresh logic needed here (simplified for demo: reload explorer)
+                fileManager.loadExplorer();
+            }
+        };
+
+        // --- 5. EDITOR ENGINE ---
+        const editor = {
+            currentFile: null,
+
+            load: async (fileId) => {
+                const file = await db.files.get(fileId);
+                editor.currentFile = file;
+                state.currentFileId = fileId;
+                
+                const canvas = document.getElementById('editor-canvas');
+                canvas.innerHTML = `
+                    <div class="mb-6 pb-2 border-b border-night-600">
+                        <input type="text" id="file-title-input" value="${file.title}" class="bg-transparent text-3xl font-bold w-full focus:outline-none text-white" oninput="editor.updateTitle(this.value)">
                     </div>
                 `;
-                lucide.createIcons();
-            }, 3000);
-        }
 
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.add('hidden');
-        }
+                // Get schema based on type, or default to single page
+                const schema = state.structure[file.type] || state.structure['single_page'];
 
-        // --- ANALYTICS ---
-        function updateStats() {
-            const textAreas = document.querySelectorAll('textarea');
-            let fullText = "";
-            textAreas.forEach(ta => fullText += ta.value + " ");
-            
-            const words = fullText.trim() ? fullText.trim().split(/\s+/).length : 0;
-            const chars = fullText.length;
-            const paragraphs = fullText.split('\n').filter(p => p.trim().length > 0).length;
-            
-            // Simulating page count based on 300 words per page
-            const sheets = Math.max(1, Math.ceil(words / 300));
+                // Render Inputs
+                schema.forEach(field => {
+                    editor.createInputField(canvas, field, file.content[field.id] || "");
+                });
 
-            document.getElementById('stat-words').innerText = `WORDS: ${words}`;
-            document.getElementById('stat-chars').innerText = `CHARS: ${chars}`;
-            document.getElementById('stat-paragraphs').innerText = `PARAGRAPHS: ${paragraphs}`;
-            document.getElementById('stat-pages').innerText = `PAPER: ${sheets} SHEET${sheets > 1 ? 'S' : ''}`;
-        }
+                // Update Preview
+                preview.render(file);
+            },
 
-        // Navigation simulation
-        function showView(view) {
-            alert(`Navigating to ${view.toUpperCase()}... In a full system, this would swap the main workshop panel.`);
-        }
+            createInputField: (container, field, value) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = "mb-6 group relative";
+                
+                // Label + Tools
+                const header = document.createElement('div');
+                header.className = "flex justify-between text-night-accent text-sm uppercase font-bold mb-1";
+                header.innerHTML = `
+                    <span>${field.label}</span>
+                    <div class="opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="editor.deleteField(this)" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                wrapper.appendChild(header);
 
-        async function deleteFile(id) {
-            if(confirm("Delete this file permanently?")) {
-                await db.files.delete(id);
-                if(activeFileId === id) {
-                    activeFileId = null;
-                    document.getElementById('input-fields-container').classList.add('hidden');
-                    document.getElementById('empty-state').classList.remove('hidden');
+                // Input Area
+                const inputDiv = document.createElement('div');
+                inputDiv.className = "rich-editor bg-night-700 p-3 rounded min-h-[60px] text-gray-200 border border-transparent transition-colors";
+                inputDiv.contentEditable = true;
+                inputDiv.setAttribute('placeholder', field.placeholder);
+                inputDiv.innerHTML = value;
+                
+                // Auto-save & Preview Trigger
+                inputDiv.oninput = () => {
+                    editor.saveContent(field.id, inputDiv.innerHTML);
+                };
+                
+                // Auto-slide logic (Enter key moves to next)
+                inputDiv.onkeydown = (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const next = wrapper.nextElementSibling?.querySelector('.rich-editor');
+                        if (next) next.focus();
+                    }
+                };
+
+                wrapper.appendChild(inputDiv);
+                container.appendChild(wrapper);
+            },
+
+            saveContent: (fieldId, html) => {
+                if(!editor.currentFile) return;
+                
+                // Update local object
+                editor.currentFile.content[fieldId] = html;
+                
+                // Update DB (Debounced in real app, direct here)
+                db.files.update(editor.currentFile.id, { content: editor.currentFile.content });
+                
+                // Update Preview
+                preview.render(editor.currentFile);
+                
+                // Update Counters
+                editor.updateCounters();
+            },
+
+            updateTitle: (newTitle) => {
+                if(!editor.currentFile) return;
+                db.files.update(editor.currentFile.id, { title: newTitle });
+                editor.currentFile.title = newTitle;
+                preview.render(editor.currentFile);
+                // Refresh list title in UI (simple way)
+                fileManager.loadFiles(editor.currentFile.folderId);
+            },
+
+            format: (command) => {
+                document.execCommand(command, false, null);
+                // Trigger save on active element
+                if(document.activeElement.classList.contains('rich-editor')) {
+                    document.activeElement.oninput();
                 }
-                refreshFileTree();
+            },
+
+            addCustomInput: () => {
+                const name = prompt("Name of new section?");
+                if(!name) return;
+                
+                const id = "custom_" + Date.now();
+                const field = { id: id, label: name, type: 'textarea', placeholder: 'Type here...' };
+                
+                // Add to DOM
+                editor.createInputField(document.getElementById('editor-canvas'), field, "");
+                
+                // Note: In a full app, we need to save this structural change to the File object config
+            },
+
+            insertDiagram: () => {
+                alert("Diagram Tool (D3.js / Chart.js) would open here.\nInserting a placeholder image for now.");
+                const imgHtml = `<img src="https://via.placeholder.com/400x200?text=Diagram+Placeholder" class="my-2 rounded border border-gray-600">`;
+                document.execCommand('insertHTML', false, imgHtml);
+            },
+
+            deleteField: (btn) => {
+                if(confirm("Remove this section?")) {
+                    btn.closest('.group').remove();
+                    // Note: Would need to remove from data object too
+                }
+            },
+
+            updateCounters: () => {
+                const text = document.getElementById('editor-canvas').innerText;
+                document.getElementById('word-count').innerText = text.split(/\s+/).filter(w => w.length > 0).length;
+                document.getElementById('section-count').innerText = document.querySelectorAll('.rich-editor').length;
+                app.showToast();
             }
-        }
+        };
+
+        // --- 6. PREVIEW RENDERER ---
+        const preview = {
+            render: (file) => {
+                const frame = document.getElementById('preview-frame');
+                if(!file) return;
+
+                let html = `
+                    <div class="font-sans text-black">
+                        <h1 class="text-4xl font-bold mb-2 uppercase text-blue-900 border-b-4 border-blue-900 pb-2">${file.title}</h1>
+                        <p class="text-sm text-gray-500 mb-6 text-right">Date: ${new Date().toLocaleDateString()}</p>
+                `;
+
+                // Loop through content keys to render (Simplified order)
+                const order = Object.keys(file.content);
+                
+                // We use the Structure definition to map labels if available, else usage raw keys
+                const schema = state.structure[file.type] || state.structure['single_page'];
+                
+                schema.forEach(field => {
+                    const content = file.content[field.id];
+                    if(content) {
+                        html += `
+                            <div class="mb-6">
+                                <h3 class="text-lg font-bold text-blue-800 uppercase mb-1 flex items-center gap-2">
+                                    <span class="w-2 h-2 bg-blue-500 rounded-full inline-block"></span> ${field.label}
+                                </h3>
+                                <div class="text-gray-800 leading-relaxed text-sm bg-gray-50 p-2 rounded border-l-2 border-blue-200">
+                                    ${content}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                html += `</div>`;
+                frame.innerHTML = html;
+            }
+        };
+
+        // Initialize App
+        app.init();
+
     </script>
 </body>
 </html>
