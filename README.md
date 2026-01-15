@@ -95,9 +95,7 @@ A comprehensive web-based platform for creating structured  notes with advanced 
   - Chart.js - Charts (for future analytics)
   - Fabric.js - Canvas manipulation (for future diagrams)
 - **Fonts**: Oswald (Google Fonts)
-- **Icons**: Font Awesome 6.4.0
-
-```
+- **Icons**: Font Awesome 6.4.0```
 
 ## 🚀 Usage
 
