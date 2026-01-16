@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Didactax | Smart Learning Summary</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        didact: {
+                            dark: '#022c22',    /* Very Dark Green */
+                            base: '#064e3b',    /* Base Green */
+                            light: '#34d399',   /* Accent Green */
+                            glass: 'rgba(255, 255, 255, 0.1)',
+                            glassBorder: 'rgba(255, 255, 255, 0.2)',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #022c22;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .glass-input:focus {
+            outline: none;
+            border-color: #34d399;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Editor Styles */
+        #editor-content {
+            min-height: 300px;
+            outline: none;
+        }
+        #editor-content ul { list-style-type: disc; margin-left: 20px; }
+        #editor-content ol { list-style-type: decimal; margin-left: 20px; }
+        #editor-content b, #editor-content strong { font-weight: 700; color: #34d399; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #022c22; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #064e3b; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #34d399; 
+        }
+
+        /* Canvas background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col relative">
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="custom-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass-card p-8 rounded-2xl max-w-sm w-full text-center transform transition-all scale-100">
+            <h3 id="modal-title" class="text-2xl font-bold text-didact-light mb-2">Notification</h3>
+            <p id="modal-message" class="text-gray-300 mb-6">Message goes here.</p>
+            <div class="flex justify-center gap-4">
+                <button id="modal-cancel" class="hidden px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 transition">Cancel</button>
+                <button id="modal-ok" class="px-6 py-2 rounded-lg bg-didact-light text-didact-dark font-bold hover:bg-white transition">Okay</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed top-0 w-full z-40 glass-panel border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="router('home')">
+                    <div class="w-8 h-8 bg-didact-light rounded-lg flex items-center justify-center">
+                        <span class="text-didact-dark font-bold text-xl">D</span>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight text-white">Didactax</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <button onclick="router('home')" class="hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition">Home</button>
+                        <button onclick="router('dashboard')" class="hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</button>
+                        <button onclick="router('editor')" class="bg-didact-light text-didact-dark px-4 py-2 rounded-md text-sm font-bold hover:bg-white transition shadow-lg shadow-didact-light/20">New Note</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow pt-24 px-4 pb-12 w-full max-w-7xl mx-auto z-10">
+        
+        <section id="view-home" class="min-h-[80vh] flex flex-col justify-center items-start">
+            <div class="max-w-3xl animate-fade-in-up">
+                <h1 class="text-6xl md:text-8xl font-bold mb-6 leading-tight">
+                    Master your <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-didact-light to-white">Learning Curve</span>
+                </h1>
+                <p class="text-xl text-gray-300 mb-8 max-w-2xl leading-relaxed">
+                    Didactax is the modern summary engine. Capture prompts, format with precision, and track your intellectual streak in a secure, glass-morphic environment.
+                </p>
+                <div class="flex gap-4">
+                    <button onclick="router('dashboard')" class="px-8 py-4 rounded-xl bg-didact-light text-didact-dark font-bold text-lg hover:scale-105 transition shadow-[0_0_20px_rgba(52,211,153,0.4)]">
+                        Go to Dashboard
+                    </button>
+                    <button onclick="router('editor')" class="px-8 py-4 rounded-xl glass-panel text-white font-bold text-lg hover:bg-white/10 transition border border-white/20">
+                        Start Writing
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-dashboard" class="hidden space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition">
+                        <button onclick="editProfile()" class="text-xs bg-white/10 px-2 py-1 rounded hover:bg-didact-light hover:text-didact-dark">Edit</button>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-didact-light to-blue-500 flex items-center justify-center text-2xl font-bold shadow-lg">
+                            <span id="profile-avatar">U</span>
+                        </div>
+                        <div>
+                            <h2 id="profile-name" class="text-2xl font-bold">User</h2>
+                            <p id="profile-bio" class="text-sm text-gray-400">Lifelong Learner</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center border-l-4 border-didact-light">
+                    <h3 class="text-gray-400 text-sm uppercase tracking-wider">Learning Streak</h3>
+                    <div class="text-5xl font-bold text-white mt-2 flex items-center gap-2">
+                        <span id="streak-count">0</span> 
+                        <span class="text-2xl">🔥</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Days in a row</p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 relative">
+                     <h3 class="text-gray-400 text-sm uppercase tracking-wider mb-4">Activity Log</h3>
+                     <ul id="activity-log" class="text-sm space-y-2 text-gray-300 h-24 overflow-y-auto pr-2 custom-scrollbar">
+                         <li class="border-b border-white/5 pb-1">System initialized...</li>
+                     </ul>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-8 min-h-[400px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold">Your Summaries</h2>
+                    <button onclick="router('editor')" class="text-sm bg-white/10 hover:bg-didact-light hover:text-black px-4 py-2 rounded transition">
+                        + Create New
+                    </button>
+                </div>
+                <div id="notes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+            </div>
+        </section>
+
+        <section id="view-editor" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+                
+                <div class="col-span-1 space-y-6">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                            <span class="w-2 h-8 bg-didact-light rounded-full"></span>
+                            Metadata
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Title</label>
+                                <input type="text" id="note-title" placeholder="Topic of study..." class="w-full glass-input rounded-lg p-3">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Label / Tag</label>
+                                <input type="text" id="note-label" placeholder="e.g. Physics, Coding" class="w-full glass-input rounded-lg p-3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="text-xl font-bold mb-4">Raw Prompt</h3>
+                        <textarea id="note-prompt" class="w-full h-40 glass-input rounded-lg p-3 resize-none" placeholder="Jot down your raw thoughts or prompt here..."></textarea>
+                    </div>
+                </div>
+
+                <div class="col-span-1 lg:col-span-2 flex flex-col">
+                    <div class="glass-panel flex-grow rounded-2xl p-1 flex flex-col relative overflow-hidden">
+                        <div class="bg-black/20 p-3 rounded-t-xl flex gap-2 items-center border-b border-white/10">
+                            <span class="text-xs text-gray-500 mr-2 uppercase tracking-wide">Tools</span>
+                            <button onclick="formatDoc('bold')" class="p-2 rounded hover:bg-white/10 text-white font-bold" title="Bold">B</button>
+                            <button onclick="formatDoc('italic')" class="p-2 rounded hover:bg-white/10 text-white italic" title="Italic">I</button>
+                            <button onclick="formatDoc('insertUnorderedList')" class="p-2 rounded hover:bg-white/10 text-white" title="List">• List</button>
+                            <button onclick="formatDoc('insertOrderedList')" class="p-2 rounded hover:bg-white/10 text-white" title="Ordered List">1. List</button>
+                            <div class="h-6 w-px bg-white/20 mx-2"></div>
+                            <button onclick="syncPromptToEditor()" class="text-xs text-didact-light hover:underline">Import Prompt</button>
+                        </div>
+                        
+                        <div id="editor-content" contenteditable="true" class="flex-grow p-6 bg-transparent text-gray-100 leading-relaxed focus:outline-none overflow-y-auto">
+                            <p>Start typing your formatted summary here or import from your prompt...</p>
+                        </div>
+
+                        <div class="p-4 border-t border-white/10 flex justify-end gap-4 bg-black/20">
+                            <button onclick="clearEditor()" class="px-4 py-2 rounded-lg text-red-400 hover:bg-red-900/20 text-sm">Clear</button>
+                            <button onclick="saveNote()" class="px-6 py-2 rounded-lg bg-didact-light text-didact-dark font-bold hover:bg-white transition shadow-lg shadow-didact-light/20">Save Summary</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="glass-panel mt-auto py-8 text-center text-gray-500 text-sm border-t border-white/10 relative z-10">
+        <p>&copy; 2024 Didactax Systems. Secure. Local. Modern.</p>
+    </footer>
+
+    <script>
+        // --- 1. GLOBAL STATE & UTILS ---
+        const state = {
+            currentView: 'home',
+            db: null,
+            currentUser: { name: 'User', bio: 'Lifelong Learner' },
+            currentNoteId: null, // null = create new, ID = edit
+        };
+
+        const dom = {
+            views: {
+                home: document.getElementById('view-home'),
+                dashboard: document.getElementById('view-dashboard'),
+                editor: document.getElementById('view-editor'),
+            },
+            modal: {
+                el: document.getElementById('custom-modal'),
+                title: document.getElementById('modal-title'),
+                msg: document.getElementById('modal-message'),
+                okBtn: document.getElementById('modal-ok'),
+                cancelBtn: document.getElementById('modal-cancel'),
+            },
+            editor: {
+                title: document.getElementById('note-title'),
+                label: document.getElementById('note-label'),
+                prompt: document.getElementById('note-prompt'),
+                content: document.getElementById('editor-content'),
+            },
+            dash: {
+                streak: document.getElementById('streak-count'),
+                log: document.getElementById('activity-log'),
+                grid: document.getElementById('notes-grid'),
+                name: document.getElementById('profile-name'),
+                bio: document.getElementById('profile-bio'),
+                avatar: document.getElementById('profile-avatar'),
+            }
+        };
+
+        // --- 2. ROUTING ---
+        function router(viewName) {
+            // Hide all
+            Object.values(dom.views).forEach(el => el.classList.add('hidden'));
+            
+            // Show target
+            if (dom.views[viewName]) {
+                dom.views[viewName].classList.remove('hidden');
+                
+                // Specific logic on view enter
+                if (viewName === 'dashboard') loadDashboard();
+                if (viewName === 'editor' && state.currentView !== 'editor') {
+                    // Reset editor if coming from elsewhere and no ID set
+                    if(!state.currentNoteId) clearEditorFields();
+                }
+                
+                state.currentView = viewName;
+                window.scrollTo(0,0);
+            }
+        }
+
+        // --- 3. CUSTOM MODAL (NO ALERTS) ---
+        function showModal(title, message, onOk, showCancel = false) {
+            dom.modal.title.textContent = title;
+            dom.modal.msg.textContent = message;
+            dom.modal.el.classList.remove('hidden');
+            
+            // Reset buttons
+            const newOk = dom.modal.okBtn.cloneNode(true);
+            dom.modal.okBtn.parentNode.replaceChild(newOk, dom.modal.okBtn);
+            dom.modal.okBtn = newOk;
+
+            if (showCancel) {
+                dom.modal.cancelBtn.classList.remove('hidden');
+                const newCancel = dom.modal.cancelBtn.cloneNode(true);
+                dom.modal.cancelBtn.parentNode.replaceChild(newCancel, dom.modal.cancelBtn);
+                dom.modal.cancelBtn = newCancel;
+                
+                dom.modal.cancelBtn.onclick = () => {
+                    dom.modal.el.classList.add('hidden');
+                };
+            } else {
+                dom.modal.cancelBtn.classList.add('hidden');
+            }
+
+            dom.modal.okBtn.onclick = () => {
+                dom.modal.el.classList.add('hidden');
+                if (onOk) onOk();
+            };
+        }
+
+        // --- 4. INDEXEDDB SETUP ---
+        const DB_NAME = 'DidactaxDB';
+        const DB_VERSION = 1;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    // Notes Store
+                    if (!db.objectStoreNames.contains('notes')) {
+                        const noteStore = db.createObjectStore('notes', { keyPath: 'id', autoIncrement: true });
+                        noteStore.createIndex('date', 'date', { unique: false });
+                    }
+                    // User Store (for profile/streak)
+                    if (!db.objectStoreNames.contains('user')) {
+                        db.createObjectStore('user', { keyPath: 'id' });
+                    }
+                };
+
+                request.onsuccess = (e) => {
+                    state.db = e.target.result;
+                    checkStreak();
+                    loadProfile();
+                    resolve(state.db);
+                };
+
+                request.onerror = (e) => reject('DB Error');
+            });
+        }
+
+        // DB Helpers
+        function dbTransaction(storeName, mode) {
+            return state.db.transaction(storeName, mode).objectStore(storeName);
+        }
+
+        // --- 5. STREAK & USER SYSTEM ---
+        function checkStreak() {
+            const tx = dbTransaction('user', 'readwrite');
+            const req = tx.get('meta');
+
+            req.onsuccess = () => {
+                const data = req.result || { id: 'meta', lastLogin: null, streak: 0, logs: [] };
+                const today = new Date().toDateString();
+                
+                if (data.lastLogin !== today) {
+                    // It's a new day or first login
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    if (data.lastLogin === yesterday.toDateString()) {
+                        data.streak++;
+                    } else if (data.lastLogin !== today) {
+                        // missed a day or first time
+                        if(data.lastLogin) data.streak = 1; // Reset if missed
+                        else data.streak = 1; // First time
+                    }
+                    
+                    data.lastLogin = today;
+                    data.logs.unshift({ action: 'Daily Login', date: new Date().toLocaleTimeString() });
+                    if(data.logs.length > 20) data.logs.pop(); // Keep log small
+                    
+                    tx.put(data);
+                }
+                
+                // Update UI
+                dom.dash.streak.textContent = data.streak;
+                renderLogs(data.logs);
+            };
+        }
+
+        function logActivity(action) {
+            const tx = dbTransaction('user', 'readwrite');
+            tx.get('meta').onsuccess = (e) => {
+                const data = e.target.result;
+                if (data) {
+                    data.logs.unshift({ action: action, date: new Date().toLocaleTimeString() });
+                    if(data.logs.length > 20) data.logs.pop();
+                    tx.put(data);
+                    renderLogs(data.logs); // Update UI immediately if visible
+                }
+            };
+        }
+
+        function renderLogs(logs) {
+            dom.dash.log.innerHTML = logs.map(l => 
+                `<li class="border-b border-white/5 pb-1 flex justify-between">
+                    <span>${l.action}</span>
+                    <span class="text-xs text-gray-500">${l.date}</span>
+                </li>`
+            ).join('');
+        }
+
+        function saveProfile(name, bio) {
+            const tx = dbTransaction('user', 'readwrite');
+            tx.get('profile').onsuccess = (e) => {
+                const data = { id: 'profile', name, bio };
+                tx.put(data);
+                state.currentUser = data;
+                updateProfileUI();
+            };
+        }
+
+        function loadProfile() {
+            const tx = dbTransaction('user', 'readonly');
+            tx.get('profile').onsuccess = (e) => {
+                if (e.target.result) {
+                    state.currentUser = e.target.result;
+                    updateProfileUI();
+                }
+            };
+        }
+
+        function updateProfileUI() {
+            dom.dash.name.textContent = state.currentUser.name;
+            dom.dash.bio.textContent = state.currentUser.bio;
+            dom.dash.avatar.textContent = state.currentUser.name.charAt(0).toUpperCase();
+        }
+
+        function editProfile() {
+            // Simple prompt replacement using our modal logic would be complex for inputs, 
+            // so we inject a small form into the modal message area for this specific case.
+            dom.modal.title.textContent = "Edit Profile";
+            dom.modal.msg.innerHTML = `
+                <input id="edit-name" value="${state.currentUser.name}" class="w-full glass-input p-2 mb-2 rounded" placeholder="Name">
+                <input id="edit-bio" value="${state.currentUser.bio}" class="w-full glass-input p-2 rounded" placeholder="Bio">
+            `;
+            dom.modal.el.classList.remove('hidden');
+            dom.modal.cancelBtn.classList.remove('hidden');
+            
+            dom.modal.okBtn.onclick = () => {
+                const newName = document.getElementById('edit-name').value;
+                const newBio = document.getElementById('edit-bio').value;
+                if(newName) {
+                    saveProfile(newName, newBio);
+                    logActivity('Updated Profile');
+                    dom.modal.el.classList.add('hidden');
+                }
+            };
+            dom.modal.cancelBtn.onclick = () => dom.modal.el.classList.add('hidden');
+        }
+
+        // --- 6. EDITOR LOGIC ---
+        function formatDoc(cmd, value = null) {
+            document.execCommand(cmd, false, value);
+            dom.editor.content.focus();
+        }
+
+        function syncPromptToEditor() {
+            const text = dom.editor.prompt.value;
+            if (!text) return;
+            // Append as paragraph
+            const p = document.createElement('p');
+            p.textContent = text;
+            dom.editor.content.appendChild(p);
+        }
+
+        function clearEditorFields() {
+            dom.editor.title.value = '';
+            dom.editor.label.value = '';
+            dom.editor.prompt.value = '';
+            dom.editor.content.innerHTML = '<p>Start typing...</p>';
+            state.currentNoteId = null;
+        }
+
+        function clearEditor() {
+            showModal("Clear Editor", "Are you sure? Unsaved changes will be lost.", () => {
+                clearEditorFields();
+            }, true);
+        }
+
+        function saveNote() {
+            const title = dom.editor.title.value.trim();
+            const content = dom.editor.content.innerHTML;
+            const label = dom.editor.label.value.trim();
+            const prompt = dom.editor.prompt.value;
+
+            if (!title) {
+                showModal("Error", "Please provide a title for your summary.");
+                return;
+            }
+
+            const note = {
+                title,
+                content,
+                label,
+                prompt,
+                date: new Date().toISOString()
+            };
+
+            const tx = dbTransaction('notes', 'readwrite');
+
+            if (state.currentNoteId) {
+                // Update
+                note.id = state.currentNoteId;
+                const req = tx.put(note);
+                req.onsuccess = () => {
+                    logActivity(`Updated note: ${title}`);
+                    showModal("Success", "Summary updated successfully!", () => router('dashboard'));
+                };
+            } else {
+                // Create
+                const req = tx.add(note);
+                req.onsuccess = () => {
+                    logActivity(`Created note: ${title}`);
+                    showModal("Success", "New summary saved!", () => {
+                        clearEditorFields();
+                        router('dashboard');
+                    });
+                };
+            }
+        }
+
+        // --- 7. DASHBOARD LOGIC ---
+        function loadDashboard() {
+            const tx = dbTransaction('notes', 'readonly');
+            const req = tx.getAll();
+
+            req.onsuccess = () => {
+                const notes = req.result;
+                dom.dash.grid.innerHTML = '';
+
+                if (notes.length === 0) {
+                    dom.dash.grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">No summaries found. Create one!</div>`;
+                    return;
+                }
+
+                // Sort by date desc
+                notes.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                notes.forEach(note => {
+                    const dateStr = new Date(note.date).toLocaleDateString();
+                    const card = document.createElement('div');
+                    card.className = 'glass-card p-6 rounded-xl hover:bg-white/5 transition flex flex-col justify-between group';
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-bold text-didact-light uppercase border border-didact-light/30 px-2 py-0.5 rounded">${note.label || 'General'}</span>
+                                <span class="text-xs text-gray-500">${dateStr}</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2 text-white truncate">${note.title}</h3>
+                            <div class="text-sm text-gray-400 line-clamp-3 mb-4">${stripHtml(note.content)}</div>
+                        </div>
+                        <div class="flex gap-2 mt-4 pt-4 border-t border-white/10 opacity-60 group-hover:opacity-100 transition">
+                            <button class="flex-1 bg-white/10 hover:bg-white/20 py-2 rounded text-xs font-bold" onclick="loadNoteForEdit(${note.id})">Edit</button>
+                            <button class="flex-1 bg-red-500/10 hover:bg-red-500/30 text-red-400 py-2 rounded text-xs font-bold" onclick="deleteNote(${note.id})">Delete</button>
+                        </div>
+                    `;
+                    dom.dash.grid.appendChild(card);
+                });
+            };
+        }
+
+        function stripHtml(html) {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+        }
+
+        // Expose to window for inline onclicks
+        window.loadNoteForEdit = (id) => {
+            const tx = dbTransaction('notes', 'readonly');
+            tx.get(id).onsuccess = (e) => {
+                const note = e.target.result;
+                dom.editor.title.value = note.title;
+                dom.editor.label.value = note.label;
+                dom.editor.prompt.value = note.prompt;
+                dom.editor.content.innerHTML = note.content;
+                state.currentNoteId = note.id;
+                router('editor');
+            };
+        };
+
+        window.deleteNote = (id) => {
+            showModal("Delete Summary", "This action cannot be undone.", () => {
+                const tx = dbTransaction('notes', 'readwrite');
+                tx.delete(id).onsuccess = () => {
+                    logActivity('Deleted a summary');
+                    loadDashboard(); // refresh
+                };
+            }, true);
+        };
+
+        // --- 8. THREE.JS ANIMATION ---
+        function initThreeJS() {
+            const canvas = document.querySelector('#bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.position.setZ(30);
+
+            // Geometry
+            const geometry = new THREE.IcosahedronGeometry(10, 1);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x34d399, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.15
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 200;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.2,
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.4
+            });
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // Lights
+            const pointLight = new THREE.PointLight(0xffffff);
+            pointLight.position.set(20, 20, 20);
+            const ambientLight = new THREE.AmbientLight(0xffffff);
+            scene.add(pointLight, ambientLight);
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                mesh.rotation.x += 0.001;
+                mesh.rotation.y += 0.001;
+
+                particlesMesh.rotation.y -= 0.0005;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Resize Handler
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            initDB().then(() => {
+                console.log("System Initialized");
+            });
+        });
+
+    </script>
+</body>
+</html>
