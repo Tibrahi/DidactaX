@@ -7,8 +7,8 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -19,6 +19,7 @@
                             main: '#059669',   /* Emerald 600 */
                             dark: '#064e3b',   /* Emerald 800 */
                             light: '#a7f3d0',  /* Emerald 200 */
+                            subtle: '#ecfdf5', /* Emerald 50 */
                             bg: '#f8fafc',     /* Slate 50 */
                         }
                     },
@@ -29,6 +30,7 @@
                     animation: {
                         'float': 'float 6s ease-in-out infinite',
                         'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
                         float: {
@@ -52,28 +54,28 @@
             overflow-x: hidden;
         }
 
-        /* Light Mode Glassmorphism */
+        /* Glassmorphism */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.65);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
             transition: all 0.3s ease;
         }
         .glass-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 50px rgba(5, 150, 105, 0.15);
+            box-shadow: 0 15px 40px rgba(5, 150, 105, 0.1);
         }
 
-        /* Inputs */
+        /* Form Elements */
         .modern-input {
             background: white;
             border: 1px solid #e2e8f0;
@@ -85,21 +87,31 @@
             outline: none;
         }
 
-        /* Editor */
+        /* Editor Styling */
         #editor-content {
-            min-height: 400px;
+            min-height: 450px;
             outline: none;
         }
-        #editor-content ul { list-style-type: disc; margin-left: 20px; }
-        #editor-content ol { list-style-type: decimal; margin-left: 20px; }
-        #editor-content blockquote { border-left: 4px solid #059669; padding-left: 1rem; color: #64748b; font-style: italic; }
+        #editor-content ul { list-style-type: disc; margin-left: 1.5rem; }
+        #editor-content ol { list-style-type: decimal; margin-left: 1.5rem; }
+        #editor-content blockquote { 
+            border-left: 4px solid #059669; 
+            padding-left: 1rem; 
+            color: #64748b; 
+            font-style: italic; 
+            background: #f0fdf4;
+            padding: 0.5rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        #editor-content b, #editor-content strong { color: #064e3b; font-weight: 700; }
 
-        /* Scrollbar */
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #059669; }
 
+        /* Background */
         #three-canvas {
             position: fixed;
             top: 0;
@@ -112,51 +124,57 @@
         .type-toggle.active {
             background-color: #059669;
             color: white;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
         }
     </style>
 </head>
-<body class="antialiased min-h-screen flex flex-col relative">
+<body class="antialiased min-h-screen flex flex-col relative font-sans">
 
     <canvas id="three-canvas"></canvas>
 
-    <div id="modal-overlay" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
-        <div class="glass-card p-8 rounded-3xl max-w-sm w-full text-center animate-slide-up">
-            <div id="modal-icon" class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+    <div id="modal-overlay" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass-card p-8 rounded-3xl max-w-sm w-full text-center animate-slide-up bg-white">
+            <div id="modal-icon" class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
                 <i class="fas fa-info"></i>
             </div>
             <h3 id="modal-title" class="text-2xl font-display font-bold text-slate-800 mb-2">Notice</h3>
             <p id="modal-msg" class="text-slate-500 mb-8 leading-relaxed">Message text.</p>
             <div class="flex justify-center gap-3">
-                <button id="modal-cancel" class="hidden px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">Cancel</button>
-                <button id="modal-ok" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold hover:bg-didact-dark shadow-lg shadow-emerald-500/30">Okay</button>
+                <button id="modal-cancel" class="hidden px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Cancel</button>
+                <button id="modal-ok" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold hover:bg-didact-dark shadow-lg shadow-emerald-500/30 transition hover:scale-105">Okay</button>
             </div>
         </div>
     </div>
 
-    <section id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-50/80 backdrop-blur-md">
-        <div class="glass-card max-w-md w-full p-10 rounded-3xl text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
-            <h1 class="text-4xl font-display font-bold text-slate-800 mb-2">Didactax.</h1>
-            <p class="text-slate-500 mb-8">Secure Local Knowledge Vault</p>
+    <section id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-50/80 backdrop-blur-xl transition-all duration-500">
+        <div class="glass-card max-w-md w-full p-10 rounded-[2rem] text-center relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
+            
+            <div class="w-20 h-20 bg-emerald-100 rounded-2xl mx-auto mb-6 flex items-center justify-center text-4xl text-emerald-600 shadow-emerald-200 shadow-lg">
+                <i class="fas fa-fingerprint"></i>
+            </div>
+
+            <h1 class="text-4xl font-display font-bold text-slate-800 mb-2 tracking-tight">Didactax.</h1>
+            <p class="text-slate-500 mb-8 font-light">Your Secure Intellectual Vault</p>
             
             <div id="auth-form-container" class="space-y-4">
                 <div class="text-left">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Secure Passkey</label>
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Access Passkey</label>
                     <input type="password" id="auth-pass" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
                 </div>
                 
-                <div id="reg-fields" class="hidden text-left space-y-4">
+                <div id="reg-fields" class="hidden text-left space-y-4 animate-slide-up">
                      <div>
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Passkey</label>
                         <input type="password" id="auth-pass-confirm" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
                     </div>
                 </div>
 
-                <button id="auth-btn" onclick="handleAuth()" class="w-full py-4 rounded-xl bg-didact-main text-white font-bold text-lg shadow-xl shadow-emerald-500/20 hover:scale-[1.02] transition transform mt-4">
+                <button id="auth-btn" onclick="handleAuth()" class="w-full py-4 rounded-xl bg-didact-main text-white font-bold text-lg shadow-xl shadow-emerald-500/20 hover:bg-didact-dark hover:scale-[1.02] transition transform mt-4">
                     Unlock System
                 </button>
                 
-                <p id="auth-subtext" class="text-sm text-slate-400 mt-4 cursor-pointer hover:text-emerald-600" onclick="toggleAuthMode()">
+                <p id="auth-subtext" class="text-sm text-slate-400 mt-6 cursor-pointer hover:text-emerald-600 transition" onclick="toggleAuthMode()">
                     First time? Create access key.
                 </p>
             </div>
@@ -165,22 +183,22 @@
 
     <div id="app-wrapper" class="hidden flex-col min-h-screen">
         
-        <nav class="fixed top-0 w-full z-40 glass-panel border-b border-white/50">
+        <nav class="fixed top-0 w-full z-40 glass-panel">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-20">
-                    <div class="flex items-center gap-3 cursor-pointer" onclick="router('home')">
-                        <div class="w-10 h-10 bg-gradient-to-br from-didact-main to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <div class="flex items-center gap-3 cursor-pointer group" onclick="router('home')">
+                        <div class="w-10 h-10 bg-gradient-to-br from-didact-main to-emerald-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition">
                             <i class="fas fa-brain text-white text-lg"></i>
                         </div>
                         <span class="text-2xl font-display font-bold text-slate-800 tracking-tight">Didactax</span>
                     </div>
                     
-                    <div class="hidden md:flex items-center space-x-1 bg-white/50 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md">
-                        <button onclick="router('home')" class="px-5 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition">Home</button>
-                        <button onclick="router('dashboard')" class="px-5 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm transition">Dashboard</button>
+                    <div class="hidden md:flex items-center space-x-1 bg-white/50 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md shadow-sm">
+                        <button onclick="router('home')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Home</button>
+                        <button onclick="router('dashboard')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Dashboard</button>
                     </div>
 
-                    <button onclick="handleLogout()" class="text-slate-400 hover:text-red-500 transition" title="Lock System">
+                    <button onclick="handleLogout()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition" title="Lock System">
                         <i class="fas fa-lock"></i>
                     </button>
                 </div>
@@ -192,7 +210,8 @@
             <section id="view-home" class="animate-slide-up">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[60vh] mb-20">
                     <div>
-                        <div class="inline-block px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-wider mb-6">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-wider mb-6">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             Local • Secure • Intelligent
                         </div>
                         <h1 class="text-6xl md:text-7xl font-display font-bold mb-6 leading-[1.1] text-slate-900">
@@ -202,54 +221,55 @@
                         <p class="text-xl text-slate-500 mb-8 max-w-lg leading-relaxed">
                             Stop losing insights. Didactax is the secure, offline-first system to convert raw information into structured summaries and actionable notes.
                         </p>
-                        <div class="flex gap-4">
+                        <div class="flex flex-wrap gap-4">
                             <button onclick="router('dashboard')" class="px-8 py-4 rounded-xl bg-didact-main text-white font-bold text-lg hover:-translate-y-1 transition shadow-lg shadow-emerald-500/30">
-                                Enter Dashboard
+                                Enter Dashboard <i class="fas fa-arrow-right ml-2 text-sm"></i>
                             </button>
-                            <button onclick="router('editor')" class="px-8 py-4 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-lg hover:bg-slate-50 transition">
-                                Quick Note
+                            <button onclick="router('editor')" class="px-8 py-4 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-lg hover:bg-slate-50 transition shadow-sm">
+                                <i class="fas fa-plus mr-2 text-emerald-500"></i> Quick Note
                             </button>
                         </div>
                     </div>
-                    <div class="hidden lg:flex justify-center items-center relative h-full">
-                         </div>
+                    <div class="hidden lg:flex justify-center items-center relative h-full"></div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
-                    <div class="glass-card p-8 rounded-3xl">
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-6 text-xl"><i class="fas fa-layer-group"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Why Didactax?</h3>
-                        <p class="text-slate-500 leading-relaxed">Standard notes are messy. Didactax forces structure with separate workflows for "Notes" (raw ideas) and "Summaries" (processed knowledge).</p>
+                    <div class="glass-card p-8 rounded-[2rem] hover:border-blue-200">
+                        <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6 text-2xl shadow-sm"><i class="fas fa-layer-group"></i></div>
+                        <h3 class="text-xl font-bold mb-3 font-display">Structured Workflow</h3>
+                        <p class="text-slate-500 leading-relaxed text-sm">Separate your raw inputs from polished summaries. Didactax creates a clear pipeline for knowledge refinement.</p>
                     </div>
-                    <div class="glass-card p-8 rounded-3xl">
-                        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6 text-xl"><i class="fas fa-shield-alt"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Total Privacy</h3>
-                        <p class="text-slate-500 leading-relaxed">No servers. No cloud tracking. Your data is encrypted in your browser's IndexedDB. You own your intellectual property.</p>
+                    <div class="glass-card p-8 rounded-[2rem] hover:border-purple-200">
+                        <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6 text-2xl shadow-sm"><i class="fas fa-shield-alt"></i></div>
+                        <h3 class="text-xl font-bold mb-3 font-display">Zero-Knowledge Cloud</h3>
+                        <p class="text-slate-500 leading-relaxed text-sm">We don't see your data. Everything is encrypted and stored locally in your browser's IndexedDB.</p>
                     </div>
-                    <div class="glass-card p-8 rounded-3xl">
-                        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-6 text-xl"><i class="fas fa-bolt"></i></div>
-                        <h3 class="text-xl font-bold mb-3">Dynamic Data</h3>
-                        <p class="text-slate-500 leading-relaxed">Create custom data fields on the fly. Track mood, sources, URLs, or difficulty levels alongside your text content.</p>
+                    <div class="glass-card p-8 rounded-[2rem] hover:border-emerald-200">
+                        <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 text-2xl shadow-sm"><i class="fas fa-bolt"></i></div>
+                        <h3 class="text-xl font-bold mb-3 font-display">Dynamic Fields</h3>
+                        <p class="text-slate-500 leading-relaxed text-sm">Adapt the system to your needs. Add custom metadata fields like "Source", "Mood", or "Priority" on the fly.</p>
                     </div>
                 </div>
 
-                <div class="glass-panel rounded-3xl p-10 lg:p-16 text-center mb-10">
-                    <h2 class="text-3xl font-display font-bold mb-10">How the System Works</h2>
+                <div class="glass-panel rounded-[2.5rem] p-10 lg:p-16 text-center mb-10 border border-white">
+                    <h2 class="text-3xl font-display font-bold mb-12">System Architecture</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                        <div class="hidden md:block absolute top-8 left-0 w-full h-0.5 bg-slate-200 -z-10"></div>
+                        
                         <div class="relative z-10">
-                            <div class="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center text-2xl font-bold text-slate-300 mx-auto mb-4 shadow-sm">1</div>
-                            <h4 class="font-bold text-lg">Input Prompt</h4>
-                            <p class="text-sm text-slate-500 mt-2">Dump raw info or questions into the prompt area.</p>
+                            <div class="w-16 h-16 bg-white border-4 border-slate-50 rounded-full flex items-center justify-center text-2xl font-bold text-emerald-600 mx-auto mb-6 shadow-md">1</div>
+                            <h4 class="font-bold text-lg mb-2">Input Prompt</h4>
+                            <p class="text-sm text-slate-500">Dump raw info or questions into the prompt area.</p>
                         </div>
                          <div class="relative z-10">
-                            <div class="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center text-2xl font-bold text-slate-300 mx-auto mb-4 shadow-sm">2</div>
-                            <h4 class="font-bold text-lg">Define Fields</h4>
-                            <p class="text-sm text-slate-500 mt-2">Add dynamic keys like "Source" or "Topic" to structure data.</p>
+                            <div class="w-16 h-16 bg-white border-4 border-slate-50 rounded-full flex items-center justify-center text-2xl font-bold text-emerald-600 mx-auto mb-6 shadow-md">2</div>
+                            <h4 class="font-bold text-lg mb-2">Define & Sync</h4>
+                            <p class="text-sm text-slate-500">Watch raw text auto-sync to the editor, then add metadata.</p>
                         </div>
                          <div class="relative z-10">
-                            <div class="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center text-2xl font-bold text-slate-300 mx-auto mb-4 shadow-sm">3</div>
-                            <h4 class="font-bold text-lg">Format & Save</h4>
-                            <p class="text-sm text-slate-500 mt-2">Use the editor to refine the text, then save to the Vault.</p>
+                            <div class="w-16 h-16 bg-white border-4 border-slate-50 rounded-full flex items-center justify-center text-2xl font-bold text-emerald-600 mx-auto mb-6 shadow-md">3</div>
+                            <h4 class="font-bold text-lg mb-2">Refine & Store</h4>
+                            <p class="text-sm text-slate-500">Format using editor tools and save to your secure vault.</p>
                         </div>
                     </div>
                 </div>
@@ -258,7 +278,7 @@
             <section id="view-dashboard" class="hidden space-y-8 animate-slide-up">
                 
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div class="lg:col-span-2 glass-card rounded-3xl p-8 relative overflow-hidden group flex items-center gap-6">
+                    <div class="lg:col-span-2 glass-card rounded-[2rem] p-8 relative overflow-hidden group flex items-center gap-6">
                         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition">
                             <button onclick="editProfile()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-emerald-500 hover:text-white transition shadow-sm font-bold">
                                 <i class="fas fa-pen mr-1"></i> Edit
@@ -269,12 +289,15 @@
                         </div>
                         <div>
                             <h2 id="profile-name" class="text-2xl font-bold text-slate-800">User</h2>
-                            <p id="profile-role" class="text-emerald-600 font-medium text-sm mb-1">Student</p>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                <p id="profile-role" class="text-emerald-700 font-bold text-xs uppercase tracking-wider">Student</p>
+                            </div>
                             <p id="profile-bio" class="text-sm text-slate-400">Lifelong Learner</p>
                         </div>
                     </div>
 
-                    <div class="glass-card rounded-3xl p-8 flex flex-col justify-center items-center text-center">
+                    <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center items-center text-center">
                         <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Momentum</h3>
                         <div class="text-5xl font-display font-bold text-slate-800 mt-3 flex items-center gap-2">
                             <span id="streak-count">0</span> 
@@ -283,16 +306,29 @@
                         <p class="text-xs text-slate-400 mt-2">Consecutive Days</p>
                     </div>
 
-                    <div class="glass-card rounded-3xl p-6 relative">
+                    <div class="glass-card rounded-[2rem] p-6 relative">
                          <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">System Log</h3>
                          <ul id="activity-log" class="text-xs space-y-3 text-slate-500 h-28 overflow-y-auto custom-scrollbar">
                              </ul>
                     </div>
                 </div>
 
-                <div class="flex gap-6 border-b border-slate-200 pb-1">
-                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')">Summaries</button>
-                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')">Notes</button>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onclick="createQuick('Summary')" class="col-span-1 bg-emerald-600 text-white p-4 rounded-2xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i class="fas fa-plus-circle"></i> New Summary
+                    </button>
+                    <button onclick="createQuick('Note')" class="col-span-1 bg-white border border-emerald-100 text-emerald-700 p-4 rounded-2xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-sticky-note"></i> New Note
+                    </button>
+                </div>
+
+                <div class="flex gap-8 border-b border-slate-200 pb-1 mt-6">
+                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')">
+                        <i class="fas fa-book-open mr-2"></i>Summaries
+                    </button>
+                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')">
+                        <i class="fas fa-sticky-note mr-2"></i>Notes
+                    </button>
                 </div>
 
                 <div id="content-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[300px]">
@@ -304,12 +340,12 @@
                     
                     <div class="lg:col-span-4 space-y-6">
                         
-                        <div class="glass-card p-2 rounded-2xl flex">
-                            <button id="type-summary" onclick="setEditorType('Summary')" class="type-toggle active flex-1 py-3 rounded-xl font-bold text-sm transition">Summary</button>
-                            <button id="type-note" onclick="setEditorType('Note')" class="type-toggle flex-1 py-3 rounded-xl font-bold text-sm transition">Note</button>
+                        <div class="glass-card p-2 rounded-2xl flex bg-white/50">
+                            <button id="type-summary" onclick="setEditorType('Summary')" class="type-toggle active flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500">Summary</button>
+                            <button id="type-note" onclick="setEditorType('Note')" class="type-toggle flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500">Note</button>
                         </div>
 
-                        <div class="glass-card p-6 rounded-3xl space-y-4">
+                        <div class="glass-card p-6 rounded-[1.5rem] space-y-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Title</label>
                                 <input type="text" id="note-title" placeholder="Topic name..." class="modern-input w-full p-3 rounded-xl">
@@ -320,43 +356,50 @@
                             </div>
                         </div>
 
-                        <div class="glass-card p-6 rounded-3xl">
+                        <div class="glass-card p-6 rounded-[1.5rem]">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-sm font-bold text-slate-700">Custom Metadata</h3>
-                                <button onclick="addDynamicField()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200"><i class="fas fa-plus"></i> Add Field</button>
+                                <button onclick="addDynamicField()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 font-bold transition"><i class="fas fa-plus mr-1"></i> Add Field</button>
                             </div>
                             <div id="dynamic-fields-container" class="space-y-3">
                                 </div>
                         </div>
 
-                        <div class="glass-card p-6 rounded-3xl">
-                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Input Prompt / Raw Data</label>
-                            <textarea id="note-prompt" class="modern-input w-full h-32 p-3 rounded-xl resize-none text-sm" placeholder="Paste raw text here to reference..."></textarea>
+                        <div class="glass-card p-6 rounded-[1.5rem]">
+                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase flex justify-between">
+                                 <span>Input Prompt / Raw Data</span>
+                                 <span class="text-emerald-500 text-[10px] bg-emerald-50 px-2 py-0.5 rounded">Auto-Sync Active</span>
+                             </label>
+                            <textarea id="note-prompt" class="modern-input w-full h-40 p-3 rounded-xl resize-none text-sm leading-relaxed" placeholder="Type here... Text will automatically appear in the preview area."></textarea>
                         </div>
                     </div>
 
                     <div class="lg:col-span-8 flex flex-col h-full">
-                        <div class="glass-panel flex-grow rounded-3xl flex flex-col relative overflow-hidden shadow-xl">
-                            <div class="bg-white/80 p-3 flex gap-2 items-center border-b border-slate-100 backdrop-blur-sm sticky top-0 z-20">
-                                <button onclick="formatDoc('bold')" class="w-8 h-8 rounded hover:bg-slate-100 font-bold text-slate-700">B</button>
-                                <button onclick="formatDoc('italic')" class="w-8 h-8 rounded hover:bg-slate-100 italic text-slate-700">I</button>
-                                <button onclick="formatDoc('underline')" class="w-8 h-8 rounded hover:bg-slate-100 underline text-slate-700">U</button>
-                                <div class="h-4 w-px bg-slate-300 mx-2"></div>
-                                <button onclick="formatDoc('insertUnorderedList')" class="w-8 h-8 rounded hover:bg-slate-100 text-slate-700"><i class="fas fa-list-ul"></i></button>
-                                <button onclick="formatDoc('insertOrderedList')" class="w-8 h-8 rounded hover:bg-slate-100 text-slate-700"><i class="fas fa-list-ol"></i></button>
-                                <div class="h-4 w-px bg-slate-300 mx-2"></div>
-                                <button onclick="formatDoc('h2')" class="px-2 h-8 rounded hover:bg-slate-100 font-bold text-slate-700 text-sm">H2</button>
+                        <div class="glass-panel flex-grow rounded-[2rem] flex flex-col relative overflow-hidden shadow-2xl ring-1 ring-slate-900/5 bg-white">
+                            <div class="bg-slate-50/90 p-3 flex gap-2 items-center border-b border-slate-100 backdrop-blur-sm sticky top-0 z-20">
+                                <button onclick="formatDoc('bold')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 font-bold transition" title="Bold"><i class="fas fa-bold"></i></button>
+                                <button onclick="formatDoc('italic')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 italic transition" title="Italic"><i class="fas fa-italic"></i></button>
+                                <button onclick="formatDoc('underline')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 underline transition" title="Underline"><i class="fas fa-underline"></i></button>
+                                <div class="h-5 w-px bg-slate-300 mx-2"></div>
+                                <button onclick="formatDoc('insertUnorderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ul"></i></button>
+                                <button onclick="formatDoc('insertOrderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ol"></i></button>
+                                <div class="h-5 w-px bg-slate-300 mx-2"></div>
+                                <button onclick="formatDoc('justifyLeft')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-align-left"></i></button>
+                                <button onclick="formatDoc('justifyCenter')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-align-center"></i></button>
+                                
                                 <div class="flex-grow"></div>
-                                <button onclick="importPrompt()" class="text-xs font-bold text-emerald-600 hover:bg-emerald-50 px-3 py-1 rounded transition">Import Prompt</button>
+                                <span class="text-xs text-slate-400 font-medium mr-2" id="sync-status">Ready</span>
                             </div>
                             
-                            <div id="editor-content" contenteditable="true" class="flex-grow p-8 bg-white/40 text-slate-800 leading-relaxed text-lg overflow-y-auto">
-                                <p>Start structuring your knowledge...</p>
+                            <div id="editor-content" contenteditable="true" class="flex-grow p-10 bg-white text-slate-800 leading-relaxed text-lg overflow-y-auto">
+                                <p class="text-slate-400">Start typing in the Input Prompt to see auto-text here, or edit directly...</p>
                             </div>
 
-                            <div class="p-4 border-t border-slate-100 flex justify-end gap-4 bg-white/60 backdrop-blur-md">
-                                <button onclick="router('dashboard')" class="px-6 py-3 rounded-xl text-slate-500 hover:text-slate-800 font-bold transition">Cancel</button>
-                                <button onclick="saveItem()" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold shadow-lg shadow-emerald-500/20 hover:scale-105 transition">Save Item</button>
+                            <div class="p-4 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/80 backdrop-blur-md">
+                                <button onclick="router('dashboard')" class="px-6 py-3 rounded-xl text-slate-500 hover:text-slate-800 font-bold transition hover:bg-white">Cancel</button>
+                                <button onclick="saveItem()" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold shadow-lg shadow-emerald-500/20 hover:scale-105 hover:bg-didact-dark transition flex items-center gap-2">
+                                    <i class="fas fa-save"></i> Save Item
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -365,13 +408,52 @@
 
         </main>
 
-        <footer class="glass-panel mt-auto py-8 text-center border-t border-white/50 relative z-10">
-            <div class="flex justify-center gap-6 mb-4 text-slate-400">
-                <i class="fab fa-github hover:text-emerald-600 cursor-pointer transition"></i>
-                <i class="fab fa-twitter hover:text-emerald-600 cursor-pointer transition"></i>
-                <i class="fas fa-envelope hover:text-emerald-600 cursor-pointer transition"></i>
+        <footer class="bg-white border-t border-slate-200 mt-auto relative z-10">
+            <div class="max-w-7xl mx-auto px-6 py-12">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div class="col-span-1 md:col-span-2 pr-8">
+                        <div class="flex items-center gap-2 mb-4">
+                             <div class="w-8 h-8 bg-didact-main rounded-lg flex items-center justify-center text-white text-sm">
+                                 <i class="fas fa-brain"></i>
+                             </div>
+                             <span class="text-xl font-bold font-display text-slate-800">Didactax.</span>
+                        </div>
+                        <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                            A secure, offline-first knowledge management system designed for structured learning. 
+                            Your data never leaves your device.
+                        </p>
+                        <div class="flex gap-4">
+                            <a href="#" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-emerald-500 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-emerald-500 hover:text-white transition"><i class="fab fa-github"></i></a>
+                            <a href="#" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-emerald-500 hover:text-white transition"><i class="fas fa-envelope"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-4 font-display">Platform</h4>
+                        <ul class="space-y-3 text-sm text-slate-500">
+                            <li><button onclick="router('home')" class="hover:text-emerald-600 transition">Home</button></li>
+                            <li><button onclick="router('dashboard')" class="hover:text-emerald-600 transition">Dashboard</button></li>
+                            <li><button onclick="router('editor')" class="hover:text-emerald-600 transition">Create New</button></li>
+                            <li><button onclick="toggleAuthMode()" class="hover:text-emerald-600 transition">Security</button></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-4 font-display">Resources</h4>
+                        <ul class="space-y-3 text-sm text-slate-500">
+                            <li><a href="#" class="hover:text-emerald-600 transition">Documentation</a></li>
+                            <li><a href="#" class="hover:text-emerald-600 transition">Markdown Guide</a></li>
+                            <li><a href="#" class="hover:text-emerald-600 transition">Privacy Policy</a></li>
+                            <li><span class="text-emerald-600 text-xs bg-emerald-50 px-2 py-1 rounded">v2.0.1 Stable</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="border-t border-slate-100 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
+                    <p>&copy; 2026 Didactax Systems. Powered by IndexedDB.</p>
+                    <p>Designed with <i class="fas fa-heart text-red-400 mx-1"></i> for Learning.</p>
+                </div>
             </div>
-            <p class="text-slate-500 text-sm font-medium">&copy; 2026 Didactax Systems. Offline First Architecture.</p>
         </footer>
     </div>
 
@@ -382,12 +464,9 @@
             view: 'auth',
             user: null,
             currentItemId: null,
-            editorType: 'Summary', // or 'Note'
-            dashboardFilter: 'Summary'
-        };
-
-        const dom = {
-            // ... mapped dynamically later for brevity
+            editorType: 'Summary', 
+            dashboardFilter: 'Summary',
+            isEditorDirty: false
         };
 
         /* --- 1. INDEXEDDB & AUTH --- */
@@ -425,7 +504,7 @@
             tx.get('creds').onsuccess = (e) => {
                 const creds = e.target.result;
                 if (!creds) {
-                    toggleAuthMode(true); // Force register
+                    toggleAuthMode(true); 
                     document.getElementById('auth-subtext').classList.add('hidden');
                     showModal('Welcome', 'Please create a secure passkey to encrypt your local vault.');
                 }
@@ -442,7 +521,7 @@
             document.getElementById('auth-btn').textContent = btnText;
             document.getElementById('auth-subtext').textContent = sub;
             document.getElementById('reg-fields').classList.toggle('hidden', !isRegisterMode);
-            document.getElementById('auth-subtext').classList.toggle('hidden', forceRegister); // hide toggle if forced
+            document.getElementById('auth-subtext').classList.toggle('hidden', forceRegister);
         }
 
         function handleAuth() {
@@ -455,10 +534,8 @@
                 const confirm = document.getElementById('auth-pass-confirm').value;
                 if(pass !== confirm) return showModal('Error', 'Passwords do not match');
                 
-                // Save Password (Simulated Hash for local usage)
-                tx.put({ id: 'creds', key: btoa(pass) }); // Simple base64 for demo (use bcrypt in prod)
+                tx.put({ id: 'creds', key: btoa(pass) }); 
                 
-                // Init User Profile
                 const userTx = dbTx('user', 'readwrite');
                 userTx.put({ 
                     id: 'profile', 
@@ -476,7 +553,6 @@
                 });
 
             } else {
-                // Login
                 tx.get('creds').onsuccess = (e) => {
                     const creds = e.target.result;
                     if(creds && creds.key === btoa(pass)) {
@@ -508,8 +584,6 @@
             const tx = dbTx('user', 'readwrite');
             tx.get('profile').onsuccess = (e) => {
                 state.user = e.target.result;
-                
-                // Streak Logic
                 const today = new Date().toDateString();
                 if (state.user.lastLogin !== today) {
                     const yesterday = new Date();
@@ -519,7 +593,7 @@
                     } else if (!state.user.lastLogin) {
                          state.user.streak = 1;
                     } else if (state.user.lastLogin !== today) {
-                        state.user.streak = 1; // reset
+                        state.user.streak = 1; 
                     }
                     state.user.lastLogin = today;
                     logAction('Daily Login');
@@ -549,11 +623,9 @@
             if(!state.user.logs) state.user.logs = [];
             state.user.logs.unshift({ action, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             if(state.user.logs.length > 20) state.user.logs.pop();
-            // User object is saved in callers usually, or we save here
         }
 
         function editProfile() {
-            // Simple edit prompt using modal html injection
             const html = `
                 <div class="space-y-2 text-left">
                     <input id="edit-name" value="${state.user.name}" class="modern-input w-full p-2 rounded" placeholder="Name">
@@ -573,7 +645,6 @@
             overlay.classList.remove('hidden');
             mCancel.classList.remove('hidden');
 
-            // Override OK button
             mOk.onclick = () => {
                 state.user.name = document.getElementById('edit-name').value;
                 state.user.role = document.getElementById('edit-role').value;
@@ -584,11 +655,10 @@
                 updateUserUI();
                 overlay.classList.add('hidden');
             };
-            
             mCancel.onclick = () => overlay.classList.add('hidden');
         }
 
-        /* --- 3. EDITOR & DYNAMIC FIELDS --- */
+        /* --- 3. EDITOR & DYNAMIC FIELDS & SYNC --- */
         
         function setEditorType(type) {
             state.editorType = type;
@@ -611,22 +681,47 @@
         function formatDoc(cmd, val=null) {
             document.execCommand(cmd, false, val);
             document.getElementById('editor-content').focus();
+            state.isEditorDirty = true; // Mark as manually edited
         }
 
-        function importPrompt() {
-            const p = document.getElementById('note-prompt').value;
-            if(p) {
-                const div = document.createElement('div');
-                div.innerHTML = `<br><blockquote style="border-left: 4px solid #059669; padding-left: 1rem; color: #64748b;">${p}</blockquote><br>`;
-                document.getElementById('editor-content').appendChild(div);
+        // --- NEW: AUTO TEXT SYNC LOGIC ---
+        const promptInput = document.getElementById('note-prompt');
+        const editorContent = document.getElementById('editor-content');
+        const syncStatus = document.getElementById('sync-status');
+
+        promptInput.addEventListener('input', (e) => {
+            // Only auto-sync if the user hasn't made heavy manual formatting edits 
+            // OR if the editor is essentially empty/default.
+            const currentEditorText = editorContent.innerText.trim();
+            const defaultText = "Start typing in the Input Prompt to see auto-text here, or edit directly...";
+            
+            if (currentEditorText === defaultText || !state.isEditorDirty) {
+                // Convert newlines to breaks for display
+                const rawText = e.target.value;
+                if(rawText.length > 0) {
+                     // Simple formatted injection
+                     editorContent.innerHTML = rawText.replace(/\n/g, '<br>');
+                     syncStatus.textContent = "Syncing...";
+                     syncStatus.className = "text-xs text-emerald-500 font-bold mr-2 animate-pulse";
+                } else {
+                     editorContent.innerHTML = `<p class="text-slate-400">${defaultText}</p>`;
+                }
+            } else {
+                syncStatus.textContent = "Manual Mode";
+                syncStatus.className = "text-xs text-slate-400 font-medium mr-2";
             }
-        }
+        });
+
+        // Track manual edits in editor
+        editorContent.addEventListener('input', () => {
+            state.isEditorDirty = true;
+            syncStatus.textContent = "Manual Mode";
+        });
 
         function saveItem() {
             const title = document.getElementById('note-title').value;
             if(!title) return showModal('Error', 'Title is required');
 
-            // Collect dynamic fields
             const dynFields = [];
             document.querySelectorAll('#dynamic-fields-container > div').forEach(div => {
                 const k = div.querySelector('.dyn-key').value;
@@ -650,7 +745,6 @@
                 item.id = state.currentItemId;
                 tx.put(item).onsuccess = () => {
                     logAction(`Updated ${item.type}`);
-                    // update user logs in db
                     const uTx = dbTx('user', 'readwrite');
                     uTx.put(state.user);
                     router('dashboard');
@@ -669,12 +763,19 @@
             document.getElementById('note-title').value = '';
             document.getElementById('note-label').value = '';
             document.getElementById('note-prompt').value = '';
-            document.getElementById('editor-content').innerHTML = '<p>Start structuring your knowledge...</p>';
+            document.getElementById('editor-content').innerHTML = '<p class="text-slate-400">Start typing in the Input Prompt to see auto-text here, or edit directly...</p>';
             document.getElementById('dynamic-fields-container').innerHTML = '';
             state.currentItemId = null;
+            state.isEditorDirty = false;
+            document.getElementById('sync-status').textContent = "Ready";
         }
 
         /* --- 4. DASHBOARD & ROUTING --- */
+
+        function createQuick(type) {
+            setEditorType(type);
+            router('editor');
+        }
 
         function router(view) {
             ['view-home', 'view-dashboard', 'view-editor'].forEach(v => {
@@ -699,9 +800,7 @@
             const req = tx.getAll();
             req.onsuccess = (e) => {
                 let items = e.target.result || [];
-                // Filter by Type
                 items = items.filter(i => i.type === state.dashboardFilter);
-                // Sort Desc
                 items.sort((a,b) => new Date(b.date) - new Date(a.date));
                 
                 const grid = document.getElementById('content-grid');
@@ -714,23 +813,22 @@
 
                 items.forEach(item => {
                     const date = new Date(item.date).toLocaleDateString();
-                    // Generate Custom Fields Badges
-                    const badges = item.customFields ? item.customFields.map(f => `<span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500">${f.key}: ${f.value}</span>`).join('') : '';
+                    const badges = item.customFields ? item.customFields.map(f => `<span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold border border-slate-200">${f.key}: ${f.value}</span>`).join('') : '';
 
                     const card = document.createElement('div');
-                    card.className = "glass-card p-6 rounded-2xl flex flex-col justify-between h-full hover:shadow-xl transition";
+                    card.className = "glass-card p-6 rounded-[1.5rem] flex flex-col justify-between h-full hover:shadow-xl transition group border border-transparent hover:border-emerald-100";
                     card.innerHTML = `
                         <div>
                             <div class="flex justify-between items-start mb-3">
                                 <span class="text-xs font-bold text-emerald-600 uppercase bg-emerald-50 px-2 py-1 rounded">${item.label || 'General'}</span>
                                 <span class="text-xs text-slate-400">${date}</span>
                             </div>
-                            <h3 class="text-xl font-bold text-slate-800 mb-2 truncate">${item.title}</h3>
+                            <h3 class="text-xl font-bold text-slate-800 mb-2 truncate group-hover:text-emerald-700 transition">${item.title}</h3>
                             <div class="flex flex-wrap gap-2 mb-4">${badges}</div>
                             <div class="text-sm text-slate-500 line-clamp-3 mb-4">${stripHtml(item.content)}</div>
                         </div>
-                        <div class="flex gap-2 pt-4 border-t border-slate-100">
-                             <button class="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition" onclick="editItem(${item.id})">Edit</button>
+                        <div class="flex gap-2 pt-4 border-t border-slate-100 opacity-60 group-hover:opacity-100 transition">
+                             <button class="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-white hover:shadow-sm rounded-lg transition" onclick="editItem(${item.id})">Edit</button>
                              <button class="flex-1 py-2 text-xs font-bold text-red-400 hover:bg-red-50 rounded-lg transition" onclick="deleteItem(${item.id})">Delete</button>
                         </div>
                     `;
@@ -754,6 +852,7 @@
                 document.getElementById('dynamic-fields-container').innerHTML = '';
                 if(item.customFields) item.customFields.forEach(f => addDynamicField(f.key, f.value));
 
+                state.isEditorDirty = true; // Assume loaded content shouldn't be auto-overwritten immediately
                 router('editor');
             };
         }
@@ -766,7 +865,7 @@
                     loadDashboardItems();
                     document.getElementById('modal-overlay').classList.add('hidden');
                 }
-            }, true); // true = show cancel
+            }, true);
         }
 
         /* --- 5. UTILS & THREEJS --- */
@@ -781,7 +880,6 @@
 
             btnCancel.classList.toggle('hidden', !showCancel);
 
-            // Clone to remove old listeners
             const newOk = btnOk.cloneNode(true);
             btnOk.parentNode.replaceChild(newOk, btnOk);
             
@@ -806,7 +904,6 @@
         function initThree() {
             const canvas = document.getElementById('three-canvas');
             const scene = new THREE.Scene();
-            // White background
             scene.background = new THREE.Color(0xf8fafc); 
             
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -815,18 +912,16 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            // Object: Emerald Wireframe Sphere
             const geometry = new THREE.IcosahedronGeometry(15, 2);
             const material = new THREE.MeshBasicMaterial({ 
-                color: 0x10b981, // Emerald 500
+                color: 0x10b981, 
                 wireframe: true,
                 transparent: true,
-                opacity: 0.1
+                opacity: 0.08
             });
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere);
 
-            // Particles
             const pGeo = new THREE.BufferGeometry();
             const pCount = 300;
             const pArr = new Float32Array(pCount * 3);
