@@ -7,7 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
     <script>
@@ -87,27 +87,46 @@
             outline: none;
         }
 
+        /* Color Picker Hidden Wrappers */
+        .color-wrapper {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .color-wrapper input[type="color"] {
+            position: absolute;
+            left: -100%;
+            top: -100%;
+            width: 200%;
+            height: 200%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
         /* Editor Styling */
         #editor-content {
-            min-height: 450px;
+            min-height: 550px;
             outline: none;
+            transition: background-color 0.3s;
         }
-        #editor-content h1.preview-title { font-size: 2.25rem; font-weight: 800; color: #1e293b; line-height: 1.1; margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; }
+        #editor-content h1.preview-title { font-size: 2.5rem; font-weight: 800; color: inherit; line-height: 1.1; margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; }
         #editor-content div.preview-meta { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        #editor-content span.preview-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.75rem; border-radius: 999px; background: #ecfdf5; color: #047857; letter-spacing: 0.05em; }
+        #editor-content span.preview-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.75rem; border-radius: 999px; background: #ecfdf5; color: #047857; letter-spacing: 0.05em; border: 1px solid #a7f3d0; }
         
-        #editor-content ul { list-style-type: disc; margin-left: 1.5rem; }
-        #editor-content ol { list-style-type: decimal; margin-left: 1.5rem; }
+        #editor-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        #editor-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
         #editor-content blockquote { 
             border-left: 4px solid #059669; 
             padding-left: 1rem; 
             color: #64748b; 
             font-style: italic; 
-            background: #f0fdf4;
+            background: rgba(240, 253, 244, 0.5);
             padding: 0.5rem 1rem;
             border-radius: 0 0.5rem 0.5rem 0;
+            margin-bottom: 1rem;
         }
-        #editor-content b, #editor-content strong { color: #064e3b; font-weight: 700; }
+        #editor-content b, #editor-content strong { font-weight: 700; }
+        #editor-content p { margin-bottom: 1rem; }
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -131,14 +150,8 @@
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
         }
         
-        /* Dashboard Row Animation */
-        .dashboard-row {
-            transition: all 0.2s ease-in-out;
-        }
-        .dashboard-row:hover {
-            transform: scale(1.01);
-            border-color: #a7f3d0;
-        }
+        .dashboard-row { transition: all 0.2s ease-in-out; }
+        .dashboard-row:hover { transform: scale(1.01); border-color: #a7f3d0; }
     </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col relative font-sans">
@@ -162,34 +175,24 @@
     <section id="view-auth" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-50/80 backdrop-blur-xl transition-all duration-500">
         <div class="glass-card max-w-md w-full p-10 rounded-[2rem] text-center relative overflow-hidden shadow-2xl">
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-cyan-500"></div>
-            
             <div class="w-20 h-20 bg-emerald-100 rounded-2xl mx-auto mb-6 flex items-center justify-center text-4xl text-emerald-600 shadow-emerald-200 shadow-lg">
                 <i class="fas fa-fingerprint"></i>
             </div>
-
             <h1 class="text-4xl font-display font-bold text-slate-800 mb-2 tracking-tight">Didactax.</h1>
             <p class="text-slate-500 mb-8 font-light">Your Secure Intellectual Vault</p>
-            
             <div id="auth-form-container" class="space-y-4">
                 <div class="text-left">
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Access Passkey</label>
                     <input type="password" id="auth-pass" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
                 </div>
-                
                 <div id="reg-fields" class="hidden text-left space-y-4 animate-slide-up">
                      <div>
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Passkey</label>
                         <input type="password" id="auth-pass-confirm" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
                     </div>
                 </div>
-
-                <button id="auth-btn" onclick="handleAuth()" class="w-full py-4 rounded-xl bg-didact-main text-white font-bold text-lg shadow-xl shadow-emerald-500/20 hover:bg-didact-dark hover:scale-[1.02] transition transform mt-4">
-                    Unlock System
-                </button>
-                
-                <p id="auth-subtext" class="text-sm text-slate-400 mt-6 cursor-pointer hover:text-emerald-600 transition" onclick="toggleAuthMode()">
-                    First time? Create access key.
-                </p>
+                <button id="auth-btn" onclick="handleAuth()" class="w-full py-4 rounded-xl bg-didact-main text-white font-bold text-lg shadow-xl shadow-emerald-500/20 hover:bg-didact-dark hover:scale-[1.02] transition transform mt-4">Unlock System</button>
+                <p id="auth-subtext" class="text-sm text-slate-400 mt-6 cursor-pointer hover:text-emerald-600 transition" onclick="toggleAuthMode()">First time? Create access key.</p>
             </div>
         </div>
     </section>
@@ -205,12 +208,10 @@
                         </div>
                         <span class="text-2xl font-display font-bold text-slate-800 tracking-tight">Didactax</span>
                     </div>
-                    
                     <div class="hidden md:flex items-center space-x-1 bg-white/50 p-1.5 rounded-2xl border border-white/60 backdrop-blur-md shadow-sm">
                         <button onclick="router('home')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Home</button>
                         <button onclick="router('dashboard')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Dashboard</button>
                     </div>
-
                     <button onclick="handleLogout()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition" title="Lock System">
                         <i class="fas fa-lock"></i>
                     </button>
@@ -224,8 +225,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[60vh] mb-20">
                     <div>
                         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-wider mb-6">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Local • Secure • Intelligent
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Local • Secure • Intelligent
                         </div>
                         <h1 class="text-6xl md:text-7xl font-display font-bold mb-6 leading-[1.1] text-slate-900">
                             Structure your <br>
@@ -247,7 +247,6 @@
             </section>
 
             <section id="view-dashboard" class="hidden space-y-8 animate-slide-up">
-                
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-2 glass-card rounded-[2rem] p-8 relative overflow-hidden group flex items-center gap-6">
                         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition">
@@ -267,39 +266,27 @@
                             <p id="profile-bio" class="text-sm text-slate-400">Lifelong Learner</p>
                         </div>
                     </div>
-
                     <div class="glass-card rounded-[2rem] p-8 flex flex-col justify-center items-center text-center">
                         <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Momentum</h3>
                         <div class="text-5xl font-display font-bold text-slate-800 mt-3 flex items-center gap-2">
-                            <span id="streak-count">0</span> 
-                            <span class="text-2xl text-orange-500 animate-pulse"><i class="fas fa-fire"></i></span>
+                            <span id="streak-count">0</span> <span class="text-2xl text-orange-500 animate-pulse"><i class="fas fa-fire"></i></span>
                         </div>
                         <p class="text-xs text-slate-400 mt-2">Consecutive Days</p>
                     </div>
-
                     <div class="glass-card rounded-[2rem] p-6 relative">
                          <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-4">System Log</h3>
-                         <ul id="activity-log" class="text-xs space-y-3 text-slate-500 h-28 overflow-y-auto custom-scrollbar">
-                         </ul>
+                         <ul id="activity-log" class="text-xs space-y-3 text-slate-500 h-28 overflow-y-auto custom-scrollbar"></ul>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button onclick="createQuick('Summary')" class="col-span-1 bg-emerald-600 text-white p-4 rounded-2xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                        <i class="fas fa-plus-circle"></i> New Summary
-                    </button>
-                    <button onclick="createQuick('Note')" class="col-span-1 bg-white border border-emerald-100 text-emerald-700 p-4 rounded-2xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-sticky-note"></i> New Note
-                    </button>
+                    <button onclick="createQuick('Summary')" class="col-span-1 bg-emerald-600 text-white p-4 rounded-2xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"><i class="fas fa-plus-circle"></i> New Summary</button>
+                    <button onclick="createQuick('Note')" class="col-span-1 bg-white border border-emerald-100 text-emerald-700 p-4 rounded-2xl font-bold hover:bg-emerald-50 transition flex items-center justify-center gap-2"><i class="fas fa-sticky-note"></i> New Note</button>
                 </div>
 
                 <div class="flex gap-8 border-b border-slate-200 pb-1 mt-6">
-                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')">
-                        <i class="fas fa-book-open mr-2"></i>Summaries
-                    </button>
-                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')">
-                        <i class="fas fa-sticky-note mr-2"></i>Notes
-                    </button>
+                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')"><i class="fas fa-book-open mr-2"></i>Summaries</button>
+                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')"><i class="fas fa-sticky-note mr-2"></i>Notes</button>
                 </div>
 
                 <div class="glass-card rounded-[2rem] p-6 min-h-[400px]">
@@ -309,12 +296,8 @@
                         <div class="hidden md:block md:col-span-2">Date</div>
                         <div class="col-span-3 md:col-span-2 text-right">Action</div>
                     </div>
-                    
-                    <div id="content-list" class="flex flex-col gap-2 mt-4">
-                        </div>
-
-                    <div id="pagination-controls" class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
-                        </div>
+                    <div id="content-list" class="flex flex-col gap-2 mt-4"></div>
+                    <div id="pagination-controls" class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100"></div>
                 </div>
             </section>
 
@@ -322,12 +305,10 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     <div class="lg:col-span-4 space-y-6">
-                        
                         <div class="glass-card p-2 rounded-2xl flex bg-white/50">
                             <button id="type-summary" onclick="setEditorType('Summary')" class="type-toggle active flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500">Summary</button>
                             <button id="type-note" onclick="setEditorType('Note')" class="type-toggle flex-1 py-3 rounded-xl font-bold text-sm transition text-slate-500">Note</button>
                         </div>
-
                         <div class="glass-card p-6 rounded-[1.5rem] space-y-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Title</label>
@@ -338,16 +319,13 @@
                                 <input type="text" id="note-label" oninput="updatePreview()" placeholder="e.g. Science, Coding" class="modern-input w-full p-3 rounded-xl">
                             </div>
                         </div>
-
                         <div class="glass-card p-6 rounded-[1.5rem]">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-sm font-bold text-slate-700">Custom Metadata</h3>
-                                <button onclick="addDynamicField()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 font-bold transition"><i class="fas fa-plus mr-1"></i> Add Field</button>
+                                <button onclick="askFieldType()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 font-bold transition"><i class="fas fa-plus mr-1"></i> Add Field</button>
                             </div>
-                            <div id="dynamic-fields-container" class="space-y-3">
-                                </div>
+                            <div id="dynamic-fields-container" class="space-y-3"></div>
                         </div>
-
                         <div class="glass-card p-6 rounded-[1.5rem]">
                              <label class="block text-xs font-bold text-slate-400 mb-2 uppercase flex justify-between">
                                  <span>Input Prompt / Raw Data</span>
@@ -359,26 +337,42 @@
 
                     <div class="lg:col-span-8 flex flex-col h-full">
                         <div class="glass-panel flex-grow rounded-[2rem] flex flex-col relative overflow-hidden shadow-2xl ring-1 ring-slate-900/5 bg-white">
-                            <div class="bg-slate-50/90 p-3 flex gap-2 items-center border-b border-slate-100 backdrop-blur-sm sticky top-0 z-20">
+                            
+                            <div class="bg-slate-50/90 p-3 flex gap-2 items-center border-b border-slate-100 backdrop-blur-sm sticky top-0 z-20 flex-wrap">
                                 <button onclick="formatDoc('bold')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 font-bold transition"><i class="fas fa-bold"></i></button>
                                 <button onclick="formatDoc('italic')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 italic transition"><i class="fas fa-italic"></i></button>
                                 <button onclick="formatDoc('underline')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 underline transition"><i class="fas fa-underline"></i></button>
-                                <div class="h-5 w-px bg-slate-300 mx-2"></div>
+                                <div class="h-5 w-px bg-slate-300 mx-1"></div>
+                                
                                 <button onclick="formatDoc('insertUnorderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ul"></i></button>
                                 <button onclick="formatDoc('insertOrderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ol"></i></button>
-                                <div class="h-5 w-px bg-slate-300 mx-2"></div>
-                                <button onclick="formatDoc('justifyLeft')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-align-left"></i></button>
+                                <div class="h-5 w-px bg-slate-300 mx-1"></div>
                                 
+                                <button onclick="modifyFontSize('increase')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition" title="Increase Size"><i class="fas fa-font"></i><span class="text-[10px] align-top">+</span></button>
+                                <button onclick="modifyFontSize('decrease')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition" title="Decrease Size"><i class="fas fa-font"></i><span class="text-[10px] align-top">-</span></button>
+                                <div class="h-5 w-px bg-slate-300 mx-1"></div>
+
+                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Text Color">
+                                    <i class="fas fa-palette"></i>
+                                    <input type="color" onchange="formatDoc('foreColor', this.value)">
+                                </label>
+                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Page Background Color">
+                                    <i class="fas fa-fill-drip"></i>
+                                    <input type="color" onchange="changePageColor(this.value)" value="#ffffff">
+                                </label>
+
                                 <div class="flex-grow"></div>
                                 <span class="text-xs text-slate-400 font-medium mr-2" id="sync-status">Live Preview</span>
                             </div>
                             
-                            <div id="editor-content" contenteditable="true" class="flex-grow p-10 bg-white text-slate-800 leading-relaxed text-lg overflow-y-auto">
+                            <div id="editor-content" contenteditable="true" class="flex-grow p-12 bg-white text-slate-800 leading-relaxed text-lg overflow-y-auto">
                                 <p class="text-slate-400 mt-10 text-center">Start typing in the fields on the left to generate your document.</p>
                             </div>
 
                             <div class="p-4 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/80 backdrop-blur-md">
-                                <button onclick="router('dashboard')" class="px-6 py-3 rounded-xl text-slate-500 hover:text-slate-800 font-bold transition hover:bg-white">Cancel</button>
+                                <button onclick="downloadPDF()" class="px-4 py-3 rounded-xl border border-red-100 text-red-600 font-bold hover:bg-red-50 transition flex items-center gap-2">
+                                    <i class="fas fa-file-pdf"></i> Download PDF
+                                </button>
                                 <button onclick="saveItem()" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold shadow-lg shadow-emerald-500/20 hover:scale-105 hover:bg-didact-dark transition flex items-center gap-2">
                                     <i class="fas fa-save"></i> Save Item
                                 </button>
@@ -389,6 +383,67 @@
             </section>
 
         </main>
+
+        <footer class="mt-20 bg-slate-900 text-slate-300 relative z-10 border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-brain text-white"></i>
+                            </div>
+                            <span class="text-2xl font-display font-bold text-white tracking-tight">Didactax</span>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            The intelligent, offline-first knowledge management system designed for lifelong learners who value structure, security, and speed.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-lg mb-6 font-display">Why Didactax?</h4>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-shield-alt text-emerald-500 mt-1"></i>
+                                <span><strong>Total Privacy:</strong> Data never leaves your device. It's stored in your browser's IndexedDB.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-bolt text-emerald-500 mt-1"></i>
+                                <span><strong>Zero Latency:</strong> No server calls means instant updates and no loading screens.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-lg mb-6 font-display">What it does</h4>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-magic text-emerald-500 mt-1"></i>
+                                <span><strong>Live Synthesis:</strong> Converts structured inputs into formatted, professional documents instantly.</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-file-export text-emerald-500 mt-1"></i>
+                                <span><strong>Smart Export:</strong> Save locally or export to PDF with one click.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-white font-bold text-lg mb-6 font-display">How it works</h4>
+                        <p class="text-sm text-slate-400 mb-4">
+                            We use advanced browser capabilities (IndexedDB) to create a persistent local database encrypted with your passkey.
+                        </p>
+                        <div class="flex gap-4">
+                            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition"><i class="fab fa-github"></i></a>
+                            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-slate-800 mt-12 pt-8 text-center text-xs text-slate-500">
+                    &copy; 2024 Didactax Systems. All rights reserved. Locally Hosted.
+                </div>
+            </div>
+        </footer>
+
     </div>
 
     <script>
@@ -401,7 +456,6 @@
             editorType: 'Summary', 
             dashboardFilter: 'Summary',
             isEditorDirty: false,
-            // Pagination state
             currentPage: 1,
             itemsPerPage: 5
         };
@@ -570,29 +624,17 @@
                     <input id="edit-bio" value="${state.user.bio}" class="modern-input w-full p-2 rounded" placeholder="Bio">
                 </div>
             `;
-            const mTitle = document.getElementById('modal-title');
-            const mMsg = document.getElementById('modal-msg');
-            const mOk = document.getElementById('modal-ok');
-            const mCancel = document.getElementById('modal-cancel');
-
-            mTitle.textContent = "Edit Profile";
-            mMsg.innerHTML = html;
-            
-            const overlay = document.getElementById('modal-overlay');
-            overlay.classList.remove('hidden');
-            mCancel.classList.remove('hidden');
-
-            mOk.onclick = () => {
+            showModal('Edit Profile', '', () => {
                 state.user.name = document.getElementById('edit-name').value;
                 state.user.role = document.getElementById('edit-role').value;
                 state.user.bio = document.getElementById('edit-bio').value;
-                
                 const tx = dbTx('user', 'readwrite');
                 tx.put(state.user);
                 updateUserUI();
-                overlay.classList.add('hidden');
-            };
-            mCancel.onclick = () => overlay.classList.add('hidden');
+                document.getElementById('modal-overlay').classList.add('hidden');
+            }, true);
+            // Inject html into msg
+            document.getElementById('modal-msg').innerHTML = html;
         }
 
         /* --- 3. EDITOR & DYNAMIC FIELDS & REAL TIME SYNC --- */
@@ -603,20 +645,54 @@
             document.getElementById('type-note').classList.toggle('active', type === 'Note');
         }
 
-        // Modified addDynamicField to ensure visual consistency and attach sync listeners
-        function addDynamicField(key = '', val = '') {
+        // New Modal to ask for Field Type
+        function askFieldType() {
+            const html = `
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="addDynamicField('','','input'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition">
+                        <i class="fas fa-grip-lines text-2xl text-emerald-600 mb-2"></i>
+                        <div class="font-bold text-slate-700">Short Text</div>
+                        <div class="text-xs text-slate-400">Standard input</div>
+                    </button>
+                    <button onclick="addDynamicField('','','textarea'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition">
+                        <i class="fas fa-align-left text-2xl text-emerald-600 mb-2"></i>
+                        <div class="font-bold text-slate-700">Long Text</div>
+                        <div class="text-xs text-slate-400">Multi-line area</div>
+                    </button>
+                </div>
+            `;
+            document.getElementById('modal-title').textContent = "Select Field Type";
+            document.getElementById('modal-msg').innerHTML = html;
+            document.getElementById('modal-ok').classList.add('hidden');
+            document.getElementById('modal-cancel').classList.remove('hidden');
+            document.getElementById('modal-cancel').onclick = closeModal;
+            document.getElementById('modal-overlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.getElementById('modal-ok').classList.remove('hidden'); // Reset default
+        }
+
+        // Modified addDynamicField to handle Input vs Textarea
+        function addDynamicField(key = '', val = '', type = 'input') {
             const container = document.getElementById('dynamic-fields-container');
             const div = document.createElement('div');
-            div.className = "flex gap-2 animate-slide-up dynamic-field-row";
+            div.className = "flex gap-2 animate-slide-up dynamic-field-row items-start";
             
-            // Note: Added oninput="updatePreview()" to both inputs for real-time sync
+            // Generate Input HTML based on type
+            const inputHtml = type === 'textarea' 
+                ? `<textarea oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs min-h-[60px]" placeholder="Value (Long Text)">${val}</textarea>`
+                : `<input type="text" value="${val}" oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs" placeholder="Value">`;
+
             div.innerHTML = `
-                <input type="text" value="${key}" oninput="updatePreview()" class="dyn-key modern-input w-1/3 p-2 rounded-xl text-xs font-bold" placeholder="Label">
-                <input type="text" value="${val}" oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs" placeholder="Value">
-                <button onclick="removeField(this)" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button>
+                <input type="text" value="${key}" oninput="updatePreview()" class="dyn-key modern-input w-1/3 p-2 rounded-xl text-xs font-bold h-10" placeholder="Label">
+                <input type="hidden" class="dyn-type" value="${type}">
+                ${inputHtml}
+                <button onclick="removeField(this)" class="text-red-400 hover:text-red-600 px-1 pt-2"><i class="fas fa-times"></i></button>
             `;
             container.appendChild(div);
-            updatePreview(); // Trigger update in case we are loading data
+            updatePreview(); 
         }
 
         function removeField(btn) {
@@ -624,14 +700,41 @@
             updatePreview();
         }
 
+        /* --- EDITOR TOOLBAR ACTIONS --- */
         function formatDoc(cmd, val=null) {
             document.execCommand(cmd, false, val);
             document.getElementById('editor-content').focus();
         }
 
-        // --- NEW: ROBUST UPDATE PREVIEW FUNCTION ---
-        // This gathers all inputs (Title, Label, Dynamic Fields, Body Prompt)
-        // and constructs the Right-Side Preview Pane.
+        function modifyFontSize(action) {
+            const sel = window.getSelection();
+            if (sel.rangeCount) {
+                const e = document.createElement('span');
+                // Simple sizing logic using css styles on a span wrapper
+                const size = action === 'increase' ? '120%' : '80%';
+                e.style.fontSize = size;
+                if (sel.toString().length > 0) {
+                     document.execCommand('insertHTML', false, `<span style="font-size: ${size}">${sel.toString()}</span>`);
+                }
+            }
+        }
+
+        function changePageColor(color) {
+            document.getElementById('editor-content').style.backgroundColor = color;
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('editor-content');
+            const opt = {
+                margin:       0.5,
+                filename:     `didactax_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
         function updatePreview() {
             const title = document.getElementById('note-title').value || 'Untitled';
             const label = document.getElementById('note-label').value;
@@ -647,12 +750,17 @@
                 const k = row.querySelector('.dyn-key').value;
                 const v = row.querySelector('.dyn-val').value;
                 if(k && v) {
-                     metaHtml += `<span class="preview-badge" style="background-color: #f1f5f9; color: #64748b; border:1px solid #e2e8f0;">${k}: ${v}</span>`;
+                     // Simple formatting for textarea content in badges might be messy, so we truncate or display as block
+                     const displayVal = v.length > 50 ? v.substring(0,47) + '...' : v;
+                     metaHtml += `<span class="preview-badge" style="background-color: #f1f5f9; color: #64748b; border:1px solid #e2e8f0;">${k}: ${displayVal}</span>`;
                 }
             });
 
-            // Format Body Text (Simple newline to br conversion for prompt)
+            // Format Body Text
             const bodyHtml = promptText.length > 0 ? promptText.replace(/\n/g, '<br>') : '<p class="text-slate-400 italic">Start typing content...</p>';
+
+            // Keep existing background color if set
+            const currentBg = document.getElementById('editor-content').style.backgroundColor;
 
             // Construct Final HTML
             const fullHtml = `
@@ -661,10 +769,12 @@
                 <div class="preview-body">${bodyHtml}</div>
             `;
 
-            document.getElementById('editor-content').innerHTML = fullHtml;
+            const editor = document.getElementById('editor-content');
+            editor.innerHTML = fullHtml;
+            // Re-apply bg in case innerHTML wipe removed style attr (it shouldn't, but safety first)
+            if(currentBg) editor.style.backgroundColor = currentBg;
+
             document.getElementById('sync-status').className = "text-xs text-emerald-600 font-bold mr-2 animate-pulse";
-            
-            // Clear pulse after a delay
             setTimeout(() => {
                  document.getElementById('sync-status').className = "text-xs text-slate-400 font-medium mr-2";
             }, 500);
@@ -678,14 +788,18 @@
             document.querySelectorAll('.dynamic-field-row').forEach(div => {
                 const k = div.querySelector('.dyn-key').value;
                 const v = div.querySelector('.dyn-val').value;
-                if(k) dynFields.push({key: k, value: v});
+                const t = div.querySelector('.dyn-type').value;
+                if(k) dynFields.push({key: k, value: v, type: t});
             });
+
+            const contentDiv = document.getElementById('editor-content');
 
             const item = {
                 title,
                 label: document.getElementById('note-label').value,
                 prompt: document.getElementById('note-prompt').value,
-                content: document.getElementById('editor-content').innerHTML, // Saves the generated HTML
+                content: contentDiv.innerHTML,
+                bgColor: contentDiv.style.backgroundColor || '#ffffff', // Save page color
                 customFields: dynFields,
                 type: state.editorType,
                 date: new Date().toISOString()
@@ -715,7 +829,9 @@
             document.getElementById('note-title').value = '';
             document.getElementById('note-label').value = '';
             document.getElementById('note-prompt').value = '';
-            document.getElementById('editor-content').innerHTML = '<p class="text-slate-400 mt-10 text-center">Start typing in the fields on the left to generate your document.</p>';
+            const ed = document.getElementById('editor-content');
+            ed.innerHTML = '<p class="text-slate-400 mt-10 text-center">Start typing in the fields on the left to generate your document.</p>';
+            ed.style.backgroundColor = '#ffffff'; // Reset color
             document.getElementById('dynamic-fields-container').innerHTML = '';
             state.currentItemId = null;
             state.isEditorDirty = false;
@@ -735,7 +851,7 @@
             document.getElementById(`view-${view}`).classList.remove('hidden');
             
             if(view === 'dashboard') {
-                state.currentPage = 1; // Reset pagination
+                state.currentPage = 1;
                 loadDashboardItems();
             }
             if(view === 'editor' && !state.currentItemId) clearEditor();
@@ -744,7 +860,7 @@
 
         function filterDashboard(type) {
             state.dashboardFilter = type;
-            state.currentPage = 1; // Reset page on filter change
+            state.currentPage = 1;
             document.getElementById('tab-summary').className = type === 'Summary' ? 'pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition' : 'pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition';
             document.getElementById('tab-note').className = type === 'Note' ? 'pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition' : 'pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition';
             loadDashboardItems();
@@ -755,16 +871,12 @@
             const req = tx.getAll();
             req.onsuccess = (e) => {
                 let items = e.target.result || [];
-                // Filter
                 items = items.filter(i => i.type === state.dashboardFilter);
-                // Sort Descending
                 items.sort((a,b) => new Date(b.date) - new Date(a.date));
-                
                 renderPagination(items);
             };
         }
 
-        // --- NEW: PAGINATION & HORIZONTAL ROW RENDERING ---
         function renderPagination(allItems) {
             const listContainer = document.getElementById('content-list');
             const paginationContainer = document.getElementById('pagination-controls');
@@ -776,18 +888,14 @@
                 return;
             }
 
-            // Slice data
             const startIndex = (state.currentPage - 1) * state.itemsPerPage;
             const endIndex = startIndex + state.itemsPerPage;
             const pageItems = allItems.slice(startIndex, endIndex);
 
-            // Render Items (Horizontal/Inline Style)
             pageItems.forEach(item => {
                 const date = new Date(item.date).toLocaleDateString();
-                
                 const row = document.createElement('div');
                 row.className = "dashboard-row glass-card p-4 rounded-xl flex flex-col md:flex-row items-center gap-4 bg-white border border-slate-100";
-                
                 row.innerHTML = `
                     <div class="w-full md:w-5/12 flex items-center gap-3">
                         <div class="w-8 h-8 rounded-lg ${item.type === 'Summary' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'} flex items-center justify-center text-sm">
@@ -795,15 +903,10 @@
                         </div>
                         <span class="font-bold text-slate-700 truncate">${item.title}</span>
                     </div>
-                    
                     <div class="w-full md:w-3/12">
                         <span class="text-xs font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-200">${item.label || 'General'}</span>
                     </div>
-                    
-                    <div class="hidden md:block md:w-2/12 text-xs text-slate-400">
-                        ${date}
-                    </div>
-
+                    <div class="hidden md:block md:w-2/12 text-xs text-slate-400">${date}</div>
                     <div class="w-full md:w-2/12 flex justify-end gap-2">
                         <button class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition" onclick="editItem(${item.id})"><i class="fas fa-pen"></i></button>
                         <button class="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
@@ -812,15 +915,11 @@
                 listContainer.appendChild(row);
             });
 
-            // Render Pagination Buttons
             const totalPages = Math.ceil(allItems.length / state.itemsPerPage);
             if(totalPages > 1) {
                 const prevBtn = `<button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 text-sm text-slate-400"' : 'class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600"'}><i class="fas fa-chevron-left mr-1"></i> Prev</button>`;
-                
                 const nextBtn = `<button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 text-sm text-slate-400"' : 'class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600"'}>Next <i class="fas fa-chevron-right ml-1"></i></button>`;
-                
                 const info = `<span class="text-xs text-slate-400">Page ${state.currentPage} of ${totalPages}</span>`;
-
                 paginationContainer.innerHTML = `${prevBtn} ${info} ${nextBtn}`;
             }
         }
@@ -837,17 +936,14 @@
                 state.currentItemId = item.id;
                 setEditorType(item.type);
                 
-                // Set Values
                 document.getElementById('note-title').value = item.title;
                 document.getElementById('note-label').value = item.label;
                 document.getElementById('note-prompt').value = item.prompt;
-                
-                // Clear and Rebuild Dynamic Fields
-                document.getElementById('dynamic-fields-container').innerHTML = '';
-                if(item.customFields) item.customFields.forEach(f => addDynamicField(f.key, f.value));
+                document.getElementById('editor-content').innerHTML = item.content || ''; // Load saved content
+                if(item.bgColor) document.getElementById('editor-content').style.backgroundColor = item.bgColor;
 
-                // Trigger Update to render preview
-                updatePreview(); 
+                document.getElementById('dynamic-fields-container').innerHTML = '';
+                if(item.customFields) item.customFields.forEach(f => addDynamicField(f.key, f.value, f.type || 'input'));
                 
                 router('editor');
             };
@@ -858,7 +954,7 @@
                 const tx = dbTx('items', 'readwrite');
                 tx.delete(id).onsuccess = () => {
                     logAction('Deleted Item');
-                    loadDashboardItems(); // Reloads current page
+                    loadDashboardItems(); 
                     document.getElementById('modal-overlay').classList.add('hidden');
                 }
             }, true);
