@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Didactax | Intelligent Knowledge System</title>
-    
+    <link rel="icon" href="./assets/logo.png" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script> <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -26,17 +27,13 @@
                     fontFamily: {
                         sans: ['Outfit', 'sans-serif'],
                         display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     },
                     animation: {
                         'float': 'float 6s ease-in-out infinite',
                         'slide-up': 'slideUp 0.5s ease-out forwards',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        },
                         slideUp: {
                             '0%': { opacity: '0', transform: 'translateY(20px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -48,19 +45,13 @@
     </script>
 
     <style>
-        body {
-            background-color: #f8fafc;
-            color: #1e293b;
-            overflow-x: hidden;
-        }
+        body { background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
 
         /* Glassmorphism */
         .glass-panel {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
         }
 
         .glass-card {
@@ -70,86 +61,57 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
             transition: all 0.3s ease;
         }
-        .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(5, 150, 105, 0.1);
-        }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(5, 150, 105, 0.1); }
 
-        /* Form Elements */
-        .modern-input {
-            background: white;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-        .modern-input:focus {
-            border-color: #059669;
-            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
-            outline: none;
-        }
+        .modern-input { background: white; border: 1px solid #e2e8f0; transition: all 0.2s; }
+        .modern-input:focus { border-color: #059669; box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1); outline: none; }
 
-        /* Color Picker Hidden Wrappers */
-        .color-wrapper {
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .color-wrapper input[type="color"] {
-            position: absolute;
-            left: -100%;
-            top: -100%;
-            width: 200%;
-            height: 200%;
-            opacity: 0;
-            cursor: pointer;
-        }
+        /* Color Pickers */
+        .color-wrapper { position: relative; overflow: hidden; cursor: pointer; }
+        .color-wrapper input[type="color"] { position: absolute; left: -100%; top: -100%; width: 200%; height: 200%; opacity: 0; cursor: pointer; }
 
         /* Editor Styling */
-        #editor-content {
-            min-height: 550px;
-            outline: none;
-            transition: background-color 0.3s;
-        }
-        #editor-content h1.preview-title { font-size: 2.5rem; font-weight: 800; color: inherit; line-height: 1.1; margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; }
-        #editor-content div.preview-meta { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        #editor-content span.preview-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.75rem; border-radius: 999px; background: #ecfdf5; color: #047857; letter-spacing: 0.05em; border: 1px solid #a7f3d0; }
+        #editor-content { min-height: 550px; outline: none; transition: background-color 0.3s; }
         
+        /* Headers */
+        #editor-content h1.preview-title { font-size: 2.5rem; font-weight: 800; color: inherit; line-height: 1.1; margin-bottom: 0.5rem; font-family: 'Space Grotesk', sans-serif; }
+        
+        /* Meta / Labels Container (Header) */
+        #editor-content div.preview-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        #editor-content span.preview-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 0.25rem 0.75rem; border-radius: 999px; background: #ecfdf5; color: #047857; letter-spacing: 0.05em; border: 1px solid #a7f3d0; }
+
+        /* Raw Data Block (Body) */
+        #editor-content div.metadata-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #475569;
+            display: grid;
+            gap: 0.5rem;
+        }
+        #editor-content div.metadata-row { display: flex; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.25rem; }
+        #editor-content div.metadata-row:last-child { border-bottom: none; padding-bottom: 0; }
+        #editor-content span.meta-key { font-weight: 700; color: #334155; min-width: 120px; }
+
+        /* Content Body */
         #editor-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
         #editor-content ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 1rem; }
-        #editor-content blockquote { 
-            border-left: 4px solid #059669; 
-            padding-left: 1rem; 
-            color: #64748b; 
-            font-style: italic; 
-            background: rgba(240, 253, 244, 0.5);
-            padding: 0.5rem 1rem;
-            border-radius: 0 0.5rem 0.5rem 0;
-            margin-bottom: 1rem;
-        }
+        #editor-content blockquote { border-left: 4px solid #059669; padding-left: 1rem; color: #64748b; font-style: italic; background: rgba(240, 253, 244, 0.5); padding: 0.5rem 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1rem; }
         #editor-content b, #editor-content strong { font-weight: 700; }
         #editor-content p { margin-bottom: 1rem; }
 
-        /* Custom Scrollbar */
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #059669; }
 
-        /* Background */
-        #three-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-        
-        .type-toggle.active {
-            background-color: #059669;
-            color: white;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-        }
-        
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .type-toggle.active { background-color: #059669; color: white; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
         .dashboard-row { transition: all 0.2s ease-in-out; }
         .dashboard-row:hover { transform: scale(1.01); border-color: #a7f3d0; }
     </style>
@@ -160,14 +122,11 @@
 
     <div id="modal-overlay" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
         <div class="glass-card p-8 rounded-3xl max-w-sm w-full text-center animate-slide-up bg-white">
-            <div id="modal-icon" class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-                <i class="fas fa-info"></i>
-            </div>
             <h3 id="modal-title" class="text-2xl font-display font-bold text-slate-800 mb-2">Notice</h3>
-            <p id="modal-msg" class="text-slate-500 mb-8 leading-relaxed">Message text.</p>
+            <div id="modal-msg" class="text-slate-500 mb-6 text-sm"></div>
             <div class="flex justify-center gap-3">
-                <button id="modal-cancel" class="hidden px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Cancel</button>
-                <button id="modal-ok" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold hover:bg-didact-dark shadow-lg shadow-emerald-500/30 transition hover:scale-105">Okay</button>
+                <button id="modal-cancel" class="hidden px-6 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition">Cancel</button>
+                <button id="modal-ok" class="px-8 py-2 rounded-xl bg-didact-main text-white font-bold hover:bg-didact-dark shadow-lg shadow-emerald-500/30 transition">Okay</button>
             </div>
         </div>
     </div>
@@ -181,15 +140,9 @@
             <h1 class="text-4xl font-display font-bold text-slate-800 mb-2 tracking-tight">Didactax.</h1>
             <p class="text-slate-500 mb-8 font-light">Your Secure Intellectual Vault</p>
             <div id="auth-form-container" class="space-y-4">
-                <div class="text-left">
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Access Passkey</label>
-                    <input type="password" id="auth-pass" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
-                </div>
+                <input type="password" id="auth-pass" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="Access Passkey">
                 <div id="reg-fields" class="hidden text-left space-y-4 animate-slide-up">
-                     <div>
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Confirm Passkey</label>
-                        <input type="password" id="auth-pass-confirm" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="••••••••">
-                    </div>
+                     <input type="password" id="auth-pass-confirm" class="modern-input w-full p-4 rounded-xl text-lg mt-1" placeholder="Confirm Passkey">
                 </div>
                 <button id="auth-btn" onclick="handleAuth()" class="w-full py-4 rounded-xl bg-didact-main text-white font-bold text-lg shadow-xl shadow-emerald-500/20 hover:bg-didact-dark hover:scale-[1.02] transition transform mt-4">Unlock System</button>
                 <p id="auth-subtext" class="text-sm text-slate-400 mt-6 cursor-pointer hover:text-emerald-600 transition" onclick="toggleAuthMode()">First time? Create access key.</p>
@@ -212,9 +165,7 @@
                         <button onclick="router('home')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Home</button>
                         <button onclick="router('dashboard')" class="px-6 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-white hover:text-emerald-700 hover:shadow-md transition">Dashboard</button>
                     </div>
-                    <button onclick="handleLogout()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition" title="Lock System">
-                        <i class="fas fa-lock"></i>
-                    </button>
+                    <button onclick="handleLogout()" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition" title="Lock System"><i class="fas fa-lock"></i></button>
                 </div>
             </div>
         </nav>
@@ -222,7 +173,7 @@
         <main class="flex-grow pt-28 px-4 pb-12 w-full max-w-7xl mx-auto z-10">
             
             <section id="view-home" class="animate-slide-up">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[60vh] mb-20">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-24 mt-10">
                     <div>
                         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-wider mb-6">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Local • Secure • Intelligent
@@ -232,7 +183,7 @@
                             <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Intellectual Growth</span>
                         </h1>
                         <p class="text-xl text-slate-500 mb-8 max-w-lg leading-relaxed">
-                            Stop losing insights. Didactax is the secure, offline-first system to convert raw information into structured summaries and actionable notes.
+                            Didactax is the secure, offline-first system to convert raw information into structured summaries and actionable notes.
                         </p>
                         <div class="flex flex-wrap gap-4">
                             <button onclick="router('dashboard')" class="px-8 py-4 rounded-xl bg-didact-main text-white font-bold text-lg hover:-translate-y-1 transition shadow-lg shadow-emerald-500/30">
@@ -244,25 +195,51 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mb-20">
+                    <h2 class="text-3xl font-display font-bold text-slate-800 mb-8 text-center">System Architecture</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="glass-card p-8 rounded-[2rem] bg-white">
+                            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mb-6 text-xl"><i class="fas fa-shield-alt"></i></div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">Why Didactax?</h3>
+                            <ul class="space-y-3 text-sm text-slate-500">
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-emerald-500 mt-1"></i> <strong>Total Privacy:</strong> Data never leaves your device. Stored in IndexedDB.</li>
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-emerald-500 mt-1"></i> <strong>Zero Latency:</strong> No server calls, instant updates.</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-[2rem] bg-white">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 text-xl"><i class="fas fa-magic"></i></div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">What it does</h3>
+                            <ul class="space-y-3 text-sm text-slate-500">
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <strong>Live Synthesis:</strong> Converts inputs into formatted documents instantly.</li>
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-blue-500 mt-1"></i> <strong>Smart Export:</strong> Save locally or PDF export.</li>
+                            </ul>
+                        </div>
+
+                        <div class="glass-card p-8 rounded-[2rem] bg-white">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6 text-xl"><i class="fas fa-code"></i></div>
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">How it works</h3>
+                            <p class="text-sm text-slate-500 leading-relaxed mb-4">
+                                We utilize the browser's native capabilities to create a persistent, encrypted local vault. Your passkey acts as the salt for data access.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section id="view-dashboard" class="hidden space-y-8 animate-slide-up">
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-2 glass-card rounded-[2rem] p-8 relative overflow-hidden group flex items-center gap-6">
                         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition">
-                            <button onclick="editProfile()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-emerald-500 hover:text-white transition shadow-sm font-bold">
-                                <i class="fas fa-pen mr-1"></i> Edit
-                            </button>
+                            <button onclick="editProfile()" class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-emerald-500 hover:text-white transition shadow-sm font-bold"><i class="fas fa-pen mr-1"></i> Edit</button>
                         </div>
                         <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-3xl font-bold text-white shadow-xl shadow-emerald-500/20">
                             <span id="profile-avatar">U</span>
                         </div>
                         <div>
                             <h2 id="profile-name" class="text-2xl font-bold text-slate-800">User</h2>
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                <p id="profile-role" class="text-emerald-700 font-bold text-xs uppercase tracking-wider">Student</p>
-                            </div>
+                            <p id="profile-role" class="text-emerald-700 font-bold text-xs uppercase tracking-wider mb-1">Student</p>
                             <p id="profile-bio" class="text-sm text-slate-400">Lifelong Learner</p>
                         </div>
                     </div>
@@ -285,14 +262,14 @@
                 </div>
 
                 <div class="flex gap-8 border-b border-slate-200 pb-1 mt-6">
-                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')"><i class="fas fa-book-open mr-2"></i>Summaries</button>
-                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')"><i class="fas fa-sticky-note mr-2"></i>Notes</button>
+                    <button id="tab-summary" class="pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition" onclick="filterDashboard('Summary')">Summaries</button>
+                    <button id="tab-note" class="pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition" onclick="filterDashboard('Note')">Notes</button>
                 </div>
 
                 <div class="glass-card rounded-[2rem] p-6 min-h-[400px]">
                     <div class="grid grid-cols-12 gap-4 px-4 pb-4 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        <div class="col-span-6 md:col-span-5">Topic / Title</div>
-                        <div class="col-span-3 md:col-span-3">Label</div>
+                        <div class="col-span-6 md:col-span-5">Topic</div>
+                        <div class="col-span-3 md:col-span-3">Labels</div>
                         <div class="hidden md:block md:col-span-2">Date</div>
                         <div class="col-span-3 md:col-span-2 text-right">Action</div>
                     </div>
@@ -315,20 +292,20 @@
                                 <input type="text" id="note-title" oninput="updatePreview()" placeholder="Topic name..." class="modern-input w-full p-3 rounded-xl">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Tags / Label</label>
-                                <input type="text" id="note-label" oninput="updatePreview()" placeholder="e.g. Science, Coding" class="modern-input w-full p-3 rounded-xl">
+                                <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Tags (comma separated)</label>
+                                <input type="text" id="note-label" oninput="updatePreview()" placeholder="Science, Draft, Physics" class="modern-input w-full p-3 rounded-xl">
                             </div>
                         </div>
                         <div class="glass-card p-6 rounded-[1.5rem]">
                             <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-sm font-bold text-slate-700">Custom Metadata</h3>
-                                <button onclick="askFieldType()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 font-bold transition"><i class="fas fa-plus mr-1"></i> Add Field</button>
+                                <h3 class="text-sm font-bold text-slate-700">Raw Metadata</h3>
+                                <button onclick="askFieldType()" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded hover:bg-emerald-200 font-bold transition"><i class="fas fa-plus mr-1"></i> Add Data</button>
                             </div>
                             <div id="dynamic-fields-container" class="space-y-3"></div>
                         </div>
                         <div class="glass-card p-6 rounded-[1.5rem]">
                              <label class="block text-xs font-bold text-slate-400 mb-2 uppercase flex justify-between">
-                                 <span>Input Prompt / Raw Data</span>
+                                 <span>Prompt / Body Text</span>
                                  <span class="text-emerald-500 text-[10px] bg-emerald-50 px-2 py-0.5 rounded">Live Sync Active</span>
                              </label>
                             <textarea id="note-prompt" oninput="updatePreview()" class="modern-input w-full h-40 p-3 rounded-xl resize-none text-sm leading-relaxed" placeholder="Type here... Content updates on the right."></textarea>
@@ -343,35 +320,23 @@
                                 <button onclick="formatDoc('italic')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 italic transition"><i class="fas fa-italic"></i></button>
                                 <button onclick="formatDoc('underline')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 underline transition"><i class="fas fa-underline"></i></button>
                                 <div class="h-5 w-px bg-slate-300 mx-1"></div>
-                                
                                 <button onclick="formatDoc('insertUnorderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ul"></i></button>
                                 <button onclick="formatDoc('insertOrderedList')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-list-ol"></i></button>
                                 <div class="h-5 w-px bg-slate-300 mx-1"></div>
-                                
-                                <button onclick="modifyFontSize('increase')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition" title="Increase Size"><i class="fas fa-font"></i><span class="text-[10px] align-top">+</span></button>
-                                <button onclick="modifyFontSize('decrease')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition" title="Decrease Size"><i class="fas fa-font"></i><span class="text-[10px] align-top">-</span></button>
+                                <button onclick="modifyFontSize('increase')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-font"></i>+</button>
+                                <button onclick="modifyFontSize('decrease')" class="w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 transition"><i class="fas fa-font"></i>-</button>
                                 <div class="h-5 w-px bg-slate-300 mx-1"></div>
-
-                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Text Color">
-                                    <i class="fas fa-palette"></i>
-                                    <input type="color" onchange="formatDoc('foreColor', this.value)">
-                                </label>
-                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Page Background Color">
-                                    <i class="fas fa-fill-drip"></i>
-                                    <input type="color" onchange="changePageColor(this.value)" value="#ffffff">
-                                </label>
-
+                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Text Color"><i class="fas fa-palette"></i><input type="color" onchange="formatDoc('foreColor', this.value)"></label>
+                                <label class="color-wrapper w-9 h-9 rounded-lg hover:bg-white hover:shadow text-slate-600 flex items-center justify-center transition" title="Page Color"><i class="fas fa-fill-drip"></i><input type="color" onchange="changePageColor(this.value)" value="#ffffff"></label>
                                 <div class="flex-grow"></div>
                                 <span class="text-xs text-slate-400 font-medium mr-2" id="sync-status">Live Preview</span>
                             </div>
                             
-                            <div id="editor-content" contenteditable="true" class="flex-grow p-12 bg-white text-slate-800 leading-relaxed text-lg overflow-y-auto">
-                                <p class="text-slate-400 mt-10 text-center">Start typing in the fields on the left to generate your document.</p>
-                            </div>
+                            <div id="editor-content" contenteditable="true" class="flex-grow p-12 bg-white text-slate-800 leading-relaxed text-lg overflow-y-auto"></div>
 
                             <div class="p-4 border-t border-slate-100 flex justify-end gap-4 bg-slate-50/80 backdrop-blur-md">
                                 <button onclick="downloadPDF()" class="px-4 py-3 rounded-xl border border-red-100 text-red-600 font-bold hover:bg-red-50 transition flex items-center gap-2">
-                                    <i class="fas fa-file-pdf"></i> Download PDF
+                                    <i class="fas fa-file-pdf"></i> PDF
                                 </button>
                                 <button onclick="saveItem()" class="px-8 py-3 rounded-xl bg-didact-main text-white font-bold shadow-lg shadow-emerald-500/20 hover:scale-105 hover:bg-didact-dark transition flex items-center gap-2">
                                     <i class="fas fa-save"></i> Save Item
@@ -381,65 +346,32 @@
                     </div>
                 </div>
             </section>
-
         </main>
 
-        <footer class="mt-20 bg-slate-900 text-slate-300 relative z-10 border-t border-slate-800">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-brain text-white"></i>
-                            </div>
-                            <span class="text-2xl font-display font-bold text-white tracking-tight">Didactax</span>
+        <footer class="mt-20 bg-slate-900 text-white relative z-10 border-t border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center"><i class="fas fa-brain"></i></div>
+                        <div>
+                            <span class="text-xl font-bold font-display tracking-tight">Didactax Systems</span>
+                            <p class="text-xs text-slate-500">Intelligent Knowledge Management</p>
                         </div>
-                        <p class="text-sm text-slate-400 leading-relaxed">
-                            The intelligent, offline-first knowledge management system designed for lifelong learners who value structure, security, and speed.
-                        </p>
+                    </div>
+                    
+                    <div class="flex gap-6 text-sm text-slate-400">
+                        <a href="#" class="hover:text-emerald-400 transition">Terms of Service</a>
+                        <a href="#" class="hover:text-emerald-400 transition">Privacy Policy</a>
+                        <a href="#" class="hover:text-emerald-400 transition">Documentation</a>
                     </div>
 
-                    <div>
-                        <h4 class="text-white font-bold text-lg mb-6 font-display">Why Didactax?</h4>
-                        <ul class="space-y-3 text-sm">
-                            <li class="flex items-start gap-3">
-                                <i class="fas fa-shield-alt text-emerald-500 mt-1"></i>
-                                <span><strong>Total Privacy:</strong> Data never leaves your device. It's stored in your browser's IndexedDB.</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fas fa-bolt text-emerald-500 mt-1"></i>
-                                <span><strong>Zero Latency:</strong> No server calls means instant updates and no loading screens.</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 class="text-white font-bold text-lg mb-6 font-display">What it does</h4>
-                        <ul class="space-y-3 text-sm">
-                            <li class="flex items-start gap-3">
-                                <i class="fas fa-magic text-emerald-500 mt-1"></i>
-                                <span><strong>Live Synthesis:</strong> Converts structured inputs into formatted, professional documents instantly.</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fas fa-file-export text-emerald-500 mt-1"></i>
-                                <span><strong>Smart Export:</strong> Save locally or export to PDF with one click.</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 class="text-white font-bold text-lg mb-6 font-display">How it works</h4>
-                        <p class="text-sm text-slate-400 mb-4">
-                            We use advanced browser capabilities (IndexedDB) to create a persistent local database encrypted with your passkey.
-                        </p>
-                        <div class="flex gap-4">
-                            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition"><i class="fab fa-github"></i></a>
-                            <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-twitter"></i></a>
-                        </div>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-emerald-600 transition"><i class="fab fa-github"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-500 transition"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
-                <div class="border-t border-slate-800 mt-12 pt-8 text-center text-xs text-slate-500">
-                    &copy; 2024 Didactax Systems. All rights reserved. Locally Hosted.
+                <div class="border-t border-slate-800 mt-8 pt-8 text-center text-xs text-slate-600">
+                    &copy; 2024 Didactax. All rights reserved. Encrypted Locally.
                 </div>
             </div>
         </footer>
@@ -447,24 +379,12 @@
     </div>
 
     <script>
-        /* --- STATE --- */
-        const state = {
-            db: null,
-            view: 'auth',
-            user: null,
-            currentItemId: null,
-            editorType: 'Summary', 
-            dashboardFilter: 'Summary',
-            isEditorDirty: false,
-            currentPage: 1,
-            itemsPerPage: 5
-        };
-
-        /* --- 1. INDEXEDDB & AUTH --- */
+        const state = { db: null, view: 'auth', user: null, currentItemId: null, editorType: 'Summary', dashboardFilter: 'Summary', currentPage: 1, itemsPerPage: 5 };
         const DB_NAME = 'DidactaxV2';
         
+        /* --- DB & AUTH --- */
         function initDB() {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const req = indexedDB.open(DB_NAME, 1);
                 req.onupgradeneeded = (e) => {
                     const db = e.target.result;
@@ -482,86 +402,49 @@
                 };
             });
         }
+        function dbTx(store, mode) { return state.db.transaction(store, mode).objectStore(store); }
 
-        function dbTx(store, mode) {
-            return state.db.transaction(store, mode).objectStore(store);
-        }
-
-        /* AUTH LOGIC */
         let isRegisterMode = false;
-
         function checkAuthStatus() {
-            const tx = dbTx('auth', 'readonly');
-            tx.get('creds').onsuccess = (e) => {
-                const creds = e.target.result;
-                if (!creds) {
+            dbTx('auth', 'readonly').get('creds').onsuccess = (e) => {
+                if (!e.target.result) {
                     toggleAuthMode(true); 
                     document.getElementById('auth-subtext').classList.add('hidden');
                     showModal('Welcome', 'Please create a secure passkey to encrypt your local vault.');
                 }
             };
         }
-
         function toggleAuthMode(forceRegister = false) {
             isRegisterMode = forceRegister || !isRegisterMode;
-            const title = isRegisterMode ? "Create Access Key" : "Didactax.";
-            const btnText = isRegisterMode ? "Register System" : "Unlock System";
-            const sub = isRegisterMode ? "Already registered? Login." : "First time? Create access key.";
-            
-            document.querySelector('#view-auth h1').textContent = title;
-            document.getElementById('auth-btn').textContent = btnText;
-            document.getElementById('auth-subtext').textContent = sub;
+            document.querySelector('#view-auth h1').textContent = isRegisterMode ? "Create Access Key" : "Didactax.";
+            document.getElementById('auth-btn').textContent = isRegisterMode ? "Register System" : "Unlock System";
+            document.getElementById('auth-subtext').textContent = isRegisterMode ? "Already registered? Login." : "First time? Create access key.";
             document.getElementById('reg-fields').classList.toggle('hidden', !isRegisterMode);
             document.getElementById('auth-subtext').classList.toggle('hidden', forceRegister);
         }
-
         function handleAuth() {
             const pass = document.getElementById('auth-pass').value;
             if(!pass) return showModal('Error', 'Password required');
-
             const tx = dbTx('auth', 'readwrite');
-            
             if (isRegisterMode) {
                 const confirm = document.getElementById('auth-pass-confirm').value;
                 if(pass !== confirm) return showModal('Error', 'Passwords do not match');
-                
                 tx.put({ id: 'creds', key: btoa(pass) }); 
-                
-                const userTx = dbTx('user', 'readwrite');
-                userTx.put({ 
-                    id: 'profile', 
-                    name: 'New User', 
-                    role: 'Explorer', 
-                    bio: 'Ready to learn', 
-                    streak: 0, 
-                    lastLogin: null,
-                    logs: [] 
-                });
-
-                showModal('Success', 'System initialized. Please login.', () => {
-                    toggleAuthMode(false);
-                    document.getElementById('auth-pass').value = '';
-                });
-
+                dbTx('user', 'readwrite').put({ id: 'profile', name: 'New User', role: 'Explorer', bio: 'Ready to learn', streak: 0, lastLogin: null, logs: [] });
+                showModal('Success', 'System initialized. Please login.', () => { toggleAuthMode(false); document.getElementById('auth-pass').value = ''; });
             } else {
                 tx.get('creds').onsuccess = (e) => {
-                    const creds = e.target.result;
-                    if(creds && creds.key === btoa(pass)) {
-                        enterApp();
-                    } else {
-                        showModal('Access Denied', 'Incorrect Passkey');
-                    }
+                    if(e.target.result && e.target.result.key === btoa(pass)) enterApp();
+                    else showModal('Access Denied', 'Incorrect Passkey');
                 };
             }
         }
-
         function handleLogout() {
             document.getElementById('app-wrapper').classList.add('hidden');
             document.getElementById('view-auth').classList.remove('hidden');
             document.getElementById('auth-pass').value = '';
             state.user = null;
         }
-
         function enterApp() {
             document.getElementById('view-auth').classList.add('hidden');
             document.getElementById('app-wrapper').classList.remove('hidden');
@@ -570,220 +453,141 @@
             router('home');
         }
 
-        /* --- 2. USER SYSTEM --- */
+        /* --- USER & LOGS --- */
         function loadUserProfile() {
-            const tx = dbTx('user', 'readwrite');
-            tx.get('profile').onsuccess = (e) => {
+            dbTx('user', 'readwrite').get('profile').onsuccess = (e) => {
                 state.user = e.target.result;
                 const today = new Date().toDateString();
                 if (state.user.lastLogin !== today) {
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    if (state.user.lastLogin === yesterday.toDateString()) {
-                        state.user.streak++;
-                    } else if (!state.user.lastLogin) {
-                         state.user.streak = 1;
-                    } else if (state.user.lastLogin !== today) {
-                        state.user.streak = 1; 
-                    }
+                    state.user.streak = (state.user.lastLogin === new Date(Date.now() - 864e5).toDateString()) ? state.user.streak + 1 : 1;
                     state.user.lastLogin = today;
                     logAction('Daily Login');
-                    tx.put(state.user);
+                    dbTx('user', 'readwrite').put(state.user);
                 }
                 updateUserUI();
             };
         }
-
         function updateUserUI() {
             document.getElementById('profile-name').textContent = state.user.name;
             document.getElementById('profile-role').textContent = state.user.role;
             document.getElementById('profile-bio').textContent = state.user.bio;
             document.getElementById('profile-avatar').textContent = state.user.name.charAt(0).toUpperCase();
             document.getElementById('streak-count').textContent = state.user.streak;
-            
-            const logHTML = state.user.logs.map(l => 
-                `<li class="border-b border-slate-100 pb-1 flex justify-between">
-                    <span>${l.action}</span>
-                    <span class="text-xs text-slate-300">${l.time}</span>
-                </li>`
-            ).join('');
-            document.getElementById('activity-log').innerHTML = logHTML;
+            document.getElementById('activity-log').innerHTML = state.user.logs.map(l => `<li class="border-b border-slate-100 pb-1 flex justify-between"><span>${l.action}</span><span class="text-xs text-slate-300">${l.time}</span></li>`).join('');
         }
-
         function logAction(action) {
             if(!state.user.logs) state.user.logs = [];
             state.user.logs.unshift({ action, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
             if(state.user.logs.length > 20) state.user.logs.pop();
         }
-
         function editProfile() {
-            const html = `
-                <div class="space-y-2 text-left">
-                    <input id="edit-name" value="${state.user.name}" class="modern-input w-full p-2 rounded" placeholder="Name">
-                    <input id="edit-role" value="${state.user.role}" class="modern-input w-full p-2 rounded" placeholder="Role (e.g. Student)">
-                    <input id="edit-bio" value="${state.user.bio}" class="modern-input w-full p-2 rounded" placeholder="Bio">
-                </div>
-            `;
+            const html = `<div class="space-y-2 text-left"><input id="edit-name" value="${state.user.name}" class="modern-input w-full p-2 rounded" placeholder="Name"><input id="edit-role" value="${state.user.role}" class="modern-input w-full p-2 rounded" placeholder="Role"><input id="edit-bio" value="${state.user.bio}" class="modern-input w-full p-2 rounded" placeholder="Bio"></div>`;
             showModal('Edit Profile', '', () => {
                 state.user.name = document.getElementById('edit-name').value;
                 state.user.role = document.getElementById('edit-role').value;
                 state.user.bio = document.getElementById('edit-bio').value;
-                const tx = dbTx('user', 'readwrite');
-                tx.put(state.user);
+                dbTx('user', 'readwrite').put(state.user);
                 updateUserUI();
                 document.getElementById('modal-overlay').classList.add('hidden');
             }, true);
-            // Inject html into msg
             document.getElementById('modal-msg').innerHTML = html;
         }
 
-        /* --- 3. EDITOR & DYNAMIC FIELDS & REAL TIME SYNC --- */
-        
+        /* --- EDITOR CORE --- */
         function setEditorType(type) {
             state.editorType = type;
             document.getElementById('type-summary').classList.toggle('active', type === 'Summary');
             document.getElementById('type-note').classList.toggle('active', type === 'Note');
         }
-
-        // New Modal to ask for Field Type
         function askFieldType() {
-            const html = `
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="addDynamicField('','','input'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition">
-                        <i class="fas fa-grip-lines text-2xl text-emerald-600 mb-2"></i>
-                        <div class="font-bold text-slate-700">Short Text</div>
-                        <div class="text-xs text-slate-400">Standard input</div>
-                    </button>
-                    <button onclick="addDynamicField('','','textarea'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition">
-                        <i class="fas fa-align-left text-2xl text-emerald-600 mb-2"></i>
-                        <div class="font-bold text-slate-700">Long Text</div>
-                        <div class="text-xs text-slate-400">Multi-line area</div>
-                    </button>
-                </div>
-            `;
-            document.getElementById('modal-title').textContent = "Select Field Type";
+            const html = `<div class="grid grid-cols-2 gap-4"><button onclick="addDynamicField('','','input'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition"><div class="font-bold text-slate-700">Short Text</div></button><button onclick="addDynamicField('','','textarea'); closeModal()" class="p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition"><div class="font-bold text-slate-700">Long Text</div></button></div>`;
+            document.getElementById('modal-title').textContent = "Select Data Type";
             document.getElementById('modal-msg').innerHTML = html;
             document.getElementById('modal-ok').classList.add('hidden');
             document.getElementById('modal-cancel').classList.remove('hidden');
             document.getElementById('modal-cancel').onclick = closeModal;
             document.getElementById('modal-overlay').classList.remove('hidden');
         }
+        function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); document.getElementById('modal-ok').classList.remove('hidden'); }
 
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.add('hidden');
-            document.getElementById('modal-ok').classList.remove('hidden'); // Reset default
-        }
-
-        // Modified addDynamicField to handle Input vs Textarea
         function addDynamicField(key = '', val = '', type = 'input') {
             const container = document.getElementById('dynamic-fields-container');
             const div = document.createElement('div');
             div.className = "flex gap-2 animate-slide-up dynamic-field-row items-start";
-            
-            // Generate Input HTML based on type
-            const inputHtml = type === 'textarea' 
-                ? `<textarea oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs min-h-[60px]" placeholder="Value (Long Text)">${val}</textarea>`
-                : `<input type="text" value="${val}" oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs" placeholder="Value">`;
-
-            div.innerHTML = `
-                <input type="text" value="${key}" oninput="updatePreview()" class="dyn-key modern-input w-1/3 p-2 rounded-xl text-xs font-bold h-10" placeholder="Label">
-                <input type="hidden" class="dyn-type" value="${type}">
-                ${inputHtml}
-                <button onclick="removeField(this)" class="text-red-400 hover:text-red-600 px-1 pt-2"><i class="fas fa-times"></i></button>
-            `;
+            const inputHtml = type === 'textarea' ? `<textarea oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs min-h-[60px]" placeholder="Value">${val}</textarea>` : `<input type="text" value="${val}" oninput="updatePreview()" class="dyn-val modern-input w-2/3 p-2 rounded-xl text-xs" placeholder="Value">`;
+            div.innerHTML = `<input type="text" value="${key}" oninput="updatePreview()" class="dyn-key modern-input w-1/3 p-2 rounded-xl text-xs font-bold h-10" placeholder="Key"><input type="hidden" class="dyn-type" value="${type}">${inputHtml}<button onclick="removeField(this)" class="text-red-400 hover:text-red-600 px-1 pt-2"><i class="fas fa-times"></i></button>`;
             container.appendChild(div);
-            updatePreview(); 
-        }
-
-        function removeField(btn) {
-            btn.parentElement.remove();
             updatePreview();
         }
+        function removeField(btn) { btn.parentElement.remove(); updatePreview(); }
 
-        /* --- EDITOR TOOLBAR ACTIONS --- */
-        function formatDoc(cmd, val=null) {
-            document.execCommand(cmd, false, val);
-            document.getElementById('editor-content').focus();
-        }
-
+        function formatDoc(cmd, val=null) { document.execCommand(cmd, false, val); document.getElementById('editor-content').focus(); }
         function modifyFontSize(action) {
             const sel = window.getSelection();
             if (sel.rangeCount) {
-                const e = document.createElement('span');
-                // Simple sizing logic using css styles on a span wrapper
                 const size = action === 'increase' ? '120%' : '80%';
-                e.style.fontSize = size;
-                if (sel.toString().length > 0) {
-                     document.execCommand('insertHTML', false, `<span style="font-size: ${size}">${sel.toString()}</span>`);
-                }
+                if (sel.toString().length > 0) document.execCommand('insertHTML', false, `<span style="font-size: ${size}">${sel.toString()}</span>`);
             }
         }
-
-        function changePageColor(color) {
-            document.getElementById('editor-content').style.backgroundColor = color;
-        }
-
+        function changePageColor(color) { document.getElementById('editor-content').style.backgroundColor = color; }
         function downloadPDF() {
-            const element = document.getElementById('editor-content');
-            const opt = {
-                margin:       0.5,
-                filename:     `didactax_${Date.now()}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set({ margin:0.5, filename:`didactax_${Date.now()}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in',format:'letter',orientation:'portrait'} }).from(document.getElementById('editor-content')).save();
         }
 
+        /* --- LOGIC UPDATE: Labels separate + Metadata in Body --- */
         function updatePreview() {
             const title = document.getElementById('note-title').value || 'Untitled';
-            const label = document.getElementById('note-label').value;
+            const labelInput = document.getElementById('note-label').value;
             const promptText = document.getElementById('note-prompt').value;
             
-            // Gather dynamic fields
-            let metaHtml = '';
-            if(label) {
-                metaHtml += `<span class="preview-badge">${label}</span>`;
+            // 1. Process Labels (Multi)
+            let metaHeaderHtml = '';
+            if(labelInput) {
+                // Split by comma, trim whitespace, ignore empty
+                const tags = labelInput.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                tags.forEach(tag => {
+                    metaHeaderHtml += `<span class="preview-badge">${tag}</span>`;
+                });
             }
 
-            document.querySelectorAll('.dynamic-field-row').forEach(row => {
-                const k = row.querySelector('.dyn-key').value;
-                const v = row.querySelector('.dyn-val').value;
-                if(k && v) {
-                     // Simple formatting for textarea content in badges might be messy, so we truncate or display as block
-                     const displayVal = v.length > 50 ? v.substring(0,47) + '...' : v;
-                     metaHtml += `<span class="preview-badge" style="background-color: #f1f5f9; color: #64748b; border:1px solid #e2e8f0;">${k}: ${displayVal}</span>`;
-                }
-            });
+            // 2. Process Custom Fields (Into Body Block)
+            let customFieldsHtml = '';
+            const fields = document.querySelectorAll('.dynamic-field-row');
+            if(fields.length > 0) {
+                let rows = '';
+                fields.forEach(row => {
+                    const k = row.querySelector('.dyn-key').value;
+                    const v = row.querySelector('.dyn-val').value;
+                    if(k && v) {
+                        rows += `<div class="metadata-row"><span class="meta-key">${k}</span><span class="meta-val">${v}</span></div>`;
+                    }
+                });
+                if(rows) customFieldsHtml = `<div class="metadata-block">${rows}</div>`;
+            }
 
-            // Format Body Text
+            // 3. Process Body
             const bodyHtml = promptText.length > 0 ? promptText.replace(/\n/g, '<br>') : '<p class="text-slate-400 italic">Start typing content...</p>';
-
-            // Keep existing background color if set
             const currentBg = document.getElementById('editor-content').style.backgroundColor;
 
-            // Construct Final HTML
+            // 4. Construct
             const fullHtml = `
                 <h1 class="preview-title">${title}</h1>
-                <div class="preview-meta">${metaHtml}</div>
+                <div class="preview-meta">${metaHeaderHtml}</div>
+                ${customFieldsHtml} 
                 <div class="preview-body">${bodyHtml}</div>
             `;
 
             const editor = document.getElementById('editor-content');
             editor.innerHTML = fullHtml;
-            // Re-apply bg in case innerHTML wipe removed style attr (it shouldn't, but safety first)
             if(currentBg) editor.style.backgroundColor = currentBg;
-
+            
             document.getElementById('sync-status').className = "text-xs text-emerald-600 font-bold mr-2 animate-pulse";
-            setTimeout(() => {
-                 document.getElementById('sync-status').className = "text-xs text-slate-400 font-medium mr-2";
-            }, 500);
+            setTimeout(() => { document.getElementById('sync-status').className = "text-xs text-slate-400 font-medium mr-2"; }, 500);
         }
 
         function saveItem() {
             const title = document.getElementById('note-title').value;
             if(!title) return showModal('Error', 'Title is required');
-
             const dynFields = [];
             document.querySelectorAll('.dynamic-field-row').forEach(div => {
                 const k = div.querySelector('.dyn-key').value;
@@ -791,257 +595,140 @@
                 const t = div.querySelector('.dyn-type').value;
                 if(k) dynFields.push({key: k, value: v, type: t});
             });
-
             const contentDiv = document.getElementById('editor-content');
-
             const item = {
                 title,
                 label: document.getElementById('note-label').value,
                 prompt: document.getElementById('note-prompt').value,
                 content: contentDiv.innerHTML,
-                bgColor: contentDiv.style.backgroundColor || '#ffffff', // Save page color
+                bgColor: contentDiv.style.backgroundColor || '#ffffff',
                 customFields: dynFields,
                 type: state.editorType,
                 date: new Date().toISOString()
             };
-
             const tx = dbTx('items', 'readwrite');
-            
             if(state.currentItemId) {
                 item.id = state.currentItemId;
-                tx.put(item).onsuccess = () => {
-                    logAction(`Updated ${item.type}`);
-                    const uTx = dbTx('user', 'readwrite');
-                    uTx.put(state.user);
-                    router('dashboard');
-                };
+                tx.put(item).onsuccess = () => { logAction(`Updated ${item.type}`); dbTx('user', 'readwrite').put(state.user); router('dashboard'); };
             } else {
-                tx.add(item).onsuccess = () => {
-                    logAction(`Created ${item.type}`);
-                    const uTx = dbTx('user', 'readwrite');
-                    uTx.put(state.user);
-                    router('dashboard');
-                };
+                tx.add(item).onsuccess = () => { logAction(`Created ${item.type}`); dbTx('user', 'readwrite').put(state.user); router('dashboard'); };
             }
         }
-
         function clearEditor() {
             document.getElementById('note-title').value = '';
             document.getElementById('note-label').value = '';
             document.getElementById('note-prompt').value = '';
             const ed = document.getElementById('editor-content');
-            ed.innerHTML = '<p class="text-slate-400 mt-10 text-center">Start typing in the fields on the left to generate your document.</p>';
-            ed.style.backgroundColor = '#ffffff'; // Reset color
+            ed.innerHTML = '<p class="text-slate-400 mt-10 text-center">Start typing...</p>';
+            ed.style.backgroundColor = '#ffffff';
             document.getElementById('dynamic-fields-container').innerHTML = '';
             state.currentItemId = null;
-            state.isEditorDirty = false;
         }
 
-        /* --- 4. DASHBOARD & ROUTING & PAGINATION --- */
-
-        function createQuick(type) {
-            setEditorType(type);
-            router('editor');
-        }
-
+        /* --- DASHBOARD & ROUTING --- */
+        function createQuick(type) { setEditorType(type); router('editor'); }
         function router(view) {
-            ['view-home', 'view-dashboard', 'view-editor'].forEach(v => {
-                document.getElementById(v).classList.add('hidden');
-            });
+            ['view-home', 'view-dashboard', 'view-editor'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById(`view-${view}`).classList.remove('hidden');
-            
-            if(view === 'dashboard') {
-                state.currentPage = 1;
-                loadDashboardItems();
-            }
+            if(view === 'dashboard') { state.currentPage = 1; loadDashboardItems(); }
             if(view === 'editor' && !state.currentItemId) clearEditor();
             window.scrollTo(0,0);
         }
-
         function filterDashboard(type) {
-            state.dashboardFilter = type;
-            state.currentPage = 1;
+            state.dashboardFilter = type; state.currentPage = 1;
             document.getElementById('tab-summary').className = type === 'Summary' ? 'pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition' : 'pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition';
             document.getElementById('tab-note').className = type === 'Note' ? 'pb-3 text-lg font-bold text-emerald-600 border-b-2 border-emerald-600 transition' : 'pb-3 text-lg font-bold text-slate-400 hover:text-emerald-600 transition';
             loadDashboardItems();
         }
-
         function loadDashboardItems() {
-            const tx = dbTx('items', 'readonly');
-            const req = tx.getAll();
-            req.onsuccess = (e) => {
-                let items = e.target.result || [];
-                items = items.filter(i => i.type === state.dashboardFilter);
-                items.sort((a,b) => new Date(b.date) - new Date(a.date));
+            dbTx('items', 'readonly').getAll().onsuccess = (e) => {
+                let items = (e.target.result || []).filter(i => i.type === state.dashboardFilter).sort((a,b) => new Date(b.date) - new Date(a.date));
                 renderPagination(items);
             };
         }
-
         function renderPagination(allItems) {
             const listContainer = document.getElementById('content-list');
             const paginationContainer = document.getElementById('pagination-controls');
-            listContainer.innerHTML = '';
-            paginationContainer.innerHTML = '';
-
-            if(allItems.length === 0) {
-                listContainer.innerHTML = `<div class="text-center py-10 text-slate-400">No ${state.dashboardFilter}s found. Create one.</div>`;
-                return;
-            }
-
+            listContainer.innerHTML = ''; paginationContainer.innerHTML = '';
+            if(allItems.length === 0) { listContainer.innerHTML = `<div class="text-center py-10 text-slate-400">No ${state.dashboardFilter}s found. Create one.</div>`; return; }
             const startIndex = (state.currentPage - 1) * state.itemsPerPage;
-            const endIndex = startIndex + state.itemsPerPage;
-            const pageItems = allItems.slice(startIndex, endIndex);
-
+            const pageItems = allItems.slice(startIndex, startIndex + state.itemsPerPage);
             pageItems.forEach(item => {
                 const date = new Date(item.date).toLocaleDateString();
-                const row = document.createElement('div');
-                row.className = "dashboard-row glass-card p-4 rounded-xl flex flex-col md:flex-row items-center gap-4 bg-white border border-slate-100";
-                row.innerHTML = `
-                    <div class="w-full md:w-5/12 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg ${item.type === 'Summary' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'} flex items-center justify-center text-sm">
-                            <i class="fas ${item.type === 'Summary' ? 'fa-book-open' : 'fa-sticky-note'}"></i>
+                const labels = item.label ? item.label.split(',').slice(0,2).join(', ') : 'General';
+                listContainer.innerHTML += `
+                    <div class="dashboard-row glass-card p-4 rounded-xl flex flex-col md:flex-row items-center gap-4 bg-white border border-slate-100">
+                        <div class="w-full md:w-5/12 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${item.type === 'Summary' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'} flex items-center justify-center text-sm"><i class="fas ${item.type === 'Summary' ? 'fa-book-open' : 'fa-sticky-note'}"></i></div>
+                            <span class="font-bold text-slate-700 truncate">${item.title}</span>
                         </div>
-                        <span class="font-bold text-slate-700 truncate">${item.title}</span>
-                    </div>
-                    <div class="w-full md:w-3/12">
-                        <span class="text-xs font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-200">${item.label || 'General'}</span>
-                    </div>
-                    <div class="hidden md:block md:w-2/12 text-xs text-slate-400">${date}</div>
-                    <div class="w-full md:w-2/12 flex justify-end gap-2">
-                        <button class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition" onclick="editItem(${item.id})"><i class="fas fa-pen"></i></button>
-                        <button class="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
-                listContainer.appendChild(row);
+                        <div class="w-full md:w-3/12"><span class="text-xs font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded border border-slate-200">${labels}</span></div>
+                        <div class="hidden md:block md:w-2/12 text-xs text-slate-400">${date}</div>
+                        <div class="w-full md:w-2/12 flex justify-end gap-2">
+                            <button class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-emerald-600 transition" onclick="editItem(${item.id})"><i class="fas fa-pen"></i></button>
+                            <button class="w-8 h-8 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition" onclick="deleteItem(${item.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>`;
             });
-
             const totalPages = Math.ceil(allItems.length / state.itemsPerPage);
             if(totalPages > 1) {
-                const prevBtn = `<button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 text-sm text-slate-400"' : 'class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600"'}><i class="fas fa-chevron-left mr-1"></i> Prev</button>`;
-                const nextBtn = `<button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled class="opacity-50 cursor-not-allowed px-4 py-2 text-sm text-slate-400"' : 'class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600"'}>Next <i class="fas fa-chevron-right ml-1"></i></button>`;
-                const info = `<span class="text-xs text-slate-400">Page ${state.currentPage} of ${totalPages}</span>`;
-                paginationContainer.innerHTML = `${prevBtn} ${info} ${nextBtn}`;
+                paginationContainer.innerHTML = `
+                    <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled class="opacity-50"' : ''} class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600">Prev</button>
+                    <span class="text-xs text-slate-400">Page ${state.currentPage} of ${totalPages}</span>
+                    <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled class="opacity-50"' : ''} class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-emerald-600">Next</button>`;
             }
         }
-
-        function changePage(direction) {
-            state.currentPage += direction;
-            loadDashboardItems();
-        }
-
+        function changePage(d) { state.currentPage += d; loadDashboardItems(); }
         function editItem(id) {
-            const tx = dbTx('items', 'readonly');
-            tx.get(id).onsuccess = (e) => {
+            dbTx('items', 'readonly').get(id).onsuccess = (e) => {
                 const item = e.target.result;
                 state.currentItemId = item.id;
                 setEditorType(item.type);
-                
                 document.getElementById('note-title').value = item.title;
                 document.getElementById('note-label').value = item.label;
                 document.getElementById('note-prompt').value = item.prompt;
-                document.getElementById('editor-content').innerHTML = item.content || ''; // Load saved content
+                document.getElementById('editor-content').innerHTML = item.content || ''; 
                 if(item.bgColor) document.getElementById('editor-content').style.backgroundColor = item.bgColor;
-
                 document.getElementById('dynamic-fields-container').innerHTML = '';
                 if(item.customFields) item.customFields.forEach(f => addDynamicField(f.key, f.value, f.type || 'input'));
-                
                 router('editor');
             };
         }
-
-        function deleteItem(id) {
-            showModal('Delete Item', 'Are you sure?', () => {
-                const tx = dbTx('items', 'readwrite');
-                tx.delete(id).onsuccess = () => {
-                    logAction('Deleted Item');
-                    loadDashboardItems(); 
-                    document.getElementById('modal-overlay').classList.add('hidden');
-                }
-            }, true);
-        }
-
-        /* --- 5. UTILS & THREEJS --- */
-
+        function deleteItem(id) { showModal('Delete Item', 'Are you sure?', () => { dbTx('items', 'readwrite').delete(id).onsuccess = () => { logAction('Deleted Item'); loadDashboardItems(); document.getElementById('modal-overlay').classList.add('hidden'); } }, true); }
         function showModal(title, msg, onOk = null, showCancel = false) {
             const el = document.getElementById('modal-overlay');
             document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-msg').textContent = msg;
-            
+            document.getElementById('modal-msg').innerHTML = msg; 
             const btnOk = document.getElementById('modal-ok');
             const btnCancel = document.getElementById('modal-cancel');
-
             btnCancel.classList.toggle('hidden', !showCancel);
-
             const newOk = btnOk.cloneNode(true);
             btnOk.parentNode.replaceChild(newOk, btnOk);
-            
-            newOk.onclick = () => {
-                if(onOk) onOk();
-                el.classList.add('hidden');
-            };
-
-            if(showCancel) {
-                btnCancel.onclick = () => el.classList.add('hidden');
-            }
-
+            newOk.onclick = () => { if(onOk) onOk(); el.classList.add('hidden'); };
+            if(showCancel) btnCancel.onclick = () => el.classList.add('hidden');
             el.classList.remove('hidden');
         }
 
+        /* --- 3D BG --- */
         function initThree() {
             const canvas = document.getElementById('three-canvas');
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf8fafc); 
-            
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const scene = new THREE.Scene(); scene.background = new THREE.Color(0xf8fafc); 
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); camera.position.z = 30;
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-            
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            const geometry = new THREE.IcosahedronGeometry(15, 2);
-            const material = new THREE.MeshBasicMaterial({ 
-                color: 0x10b981, 
-                wireframe: true,
-                transparent: true,
-                opacity: 0.08
-            });
-            const sphere = new THREE.Mesh(geometry, material);
+            const sphere = new THREE.Mesh(new THREE.IcosahedronGeometry(15, 2), new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true, transparent: true, opacity: 0.08 }));
             scene.add(sphere);
-
-            const pGeo = new THREE.BufferGeometry();
-            const pCount = 300;
-            const pArr = new Float32Array(pCount * 3);
-            for(let i=0; i<pCount*3; i++) {
-                pArr[i] = (Math.random() - 0.5) * 80;
-            }
+            const pGeo = new THREE.BufferGeometry(); const pArr = new Float32Array(900);
+            for(let i=0; i<900; i++) pArr[i] = (Math.random() - 0.5) * 80;
             pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
-            const pMat = new THREE.PointsMaterial({ size: 0.15, color: 0x059669 });
-            const particles = new THREE.Points(pGeo, pMat);
+            const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 0.15, color: 0x059669 }));
             scene.add(particles);
-
-            camera.position.z = 30;
-
-            function animate() {
-                requestAnimationFrame(animate);
-                sphere.rotation.y += 0.002;
-                sphere.rotation.x += 0.001;
-                particles.rotation.y -= 0.001;
-                renderer.render(scene, camera);
-            }
+            function animate() { requestAnimationFrame(animate); sphere.rotation.y+=0.002; sphere.rotation.x+=0.001; particles.rotation.y-=0.001; renderer.render(scene, camera); }
             animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
         }
 
-        window.onload = () => {
-            initThree();
-            initDB();
-        };
-
+        window.onload = () => { initThree(); initDB(); };
     </script>
 </body>
 </html>
